@@ -1,34 +1,44 @@
-<p>video-layout works!</p>
-<div class="video-container">
-  <div *ngIf="cameras.length === 0" class="no-cameras">
+<div class="video-container" [ngSwitch]="cameras.length">
+
+  <div *ngSwitchCase="0" class="no-cameras">
     <p>No Cameras</p>
     <button class="action-btn">Connect Camera</button>
   </div>
 
-  <div *ngIf="cameras.length === 1" class="single-camera">
-    <video #video1 [srcObject]="cameras[0].stream" autoplay></video>
+  <div *ngSwitchCase="1" class="single-camera">
+    <video #video1 [srcObject]="cameras[0]?.stream" autoplay playsinline></video>
     <button class="action-btn">Connect Camera</button>
   </div>
 
-  <div *ngIf="cameras.length === 2" class="two-cameras">
-    <video #video2 [srcObject]="cameras[0].stream" autoplay></video>
-    <video #video3 [srcObject]="cameras[1].stream" autoplay></video>
+  <div *ngSwitchCase="2" class="two-cameras">
+    <video #video2 [srcObject]="cameras[0]?.stream" autoplay playsinline></video>
+    <video #video3 [srcObject]="cameras[1]?.stream" autoplay playsinline></video>
     <button class="action-btn">Connect Camera</button>
   </div>
 
-  <div *ngIf="cameras.length === 3" class="three-cameras">
-    <video #video4 [srcObject]="cameras[0].stream" autoplay></video>
-    <video #video5 [srcObject]="cameras[1].stream" autoplay></video>
-    <video #video6 [srcObject]="cameras[2].stream" autoplay></video>
+  <div *ngSwitchCase="3" class="three-cameras">
+    <video #video4 [srcObject]="cameras[0]?.stream" autoplay playsinline></video>
+    <video #video5 [srcObject]="cameras[1]?.stream" autoplay playsinline></video>
+    <video #video6 [srcObject]="cameras[2]?.stream" autoplay playsinline></video>
     <button class="action-btn">Connect Camera</button>
   </div>
 
-  <div *ngIf="cameras.length === 4" class="four-cameras">
-    <video #video7 [srcObject]="cameras[0].stream" autoplay></video>
-    <video #video8 [srcObject]="cameras[1].stream" autoplay></video>
-    <video #video9 [srcObject]="cameras[2].stream" autoplay></video>
-    <video #video10 [srcObject]="cameras[3].stream" autoplay></video>
+  <div *ngSwitchCase="4" class="four-cameras">
+    <video #video7 [srcObject]="cameras[0]?.stream" autoplay playsinline></video>
+    <video #video8 [srcObject]="cameras[1]?.stream" autoplay playsinline></video>
+    <video #video9 [srcObject]="cameras[2]?.stream" autoplay playsinline></video>
+    <video #video10 [srcObject]="cameras[3]?.stream" autoplay playsinline></video>
     <button class="action-btn">Connect Camera</button>
   </div>
+
+  <!-- For future development... -->
+  <div *ngSwitchDefault class="four-cameras">
+    <video #video11 [srcObject]="cameras[0]?.stream" autoplay playsinline></video>
+    <video #video12 [srcObject]="cameras[1]?.stream" autoplay playsinline></video>
+    <video #video13 [srcObject]="cameras[2]?.stream" autoplay playsinline></video>
+    <video #video14 [srcObject]="cameras[3]?.stream" autoplay playsinline></video>
+    <p>Only the first 4 cameras will be displayed</p>
+    <button class="action-btn">Connect Camera</button>
+  </div>
+
 </div>
-  
