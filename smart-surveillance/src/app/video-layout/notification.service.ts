@@ -7,12 +7,10 @@ import { Observable, Subject } from 'rxjs';
 export class NotificationService {
   private notificationsSubject = new Subject<string>();
 
-  constructor(private zone: NgZone) {
-    this.connectToNotifications();
-  }
+  constructor(private zone: NgZone) {}
 
-  private connectToNotifications() {
-    const eventSource = new EventSource('http://localhost:8080/notifications');
+  public connectToNotifications(cameraId: string) {
+    const eventSource = new EventSource('http://notif-service.addr:8080/notifications/' + cameraId);
 
     eventSource.onmessage = (event) => {
       this.zone.run(() => {

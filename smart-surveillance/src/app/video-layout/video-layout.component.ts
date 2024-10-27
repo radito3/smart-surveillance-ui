@@ -32,9 +32,8 @@ export class VideoLayoutComponent implements OnInit {
     });
   }
 
+  // delet dis
   initializeDemoCameras() {
-    // For demo purposes, simulate connected cameras
-    // Replace this with actual camera stream logic
     navigator.mediaDevices.getUserMedia({ video: true })
       .then(stream => {
         this.cameras = [
@@ -50,37 +49,18 @@ export class VideoLayoutComponent implements OnInit {
   }
 
   setupWebRTC() {
-    const configuration = {
-      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
-    };
-
     // Create WebRTC peer connection
-    this.peerConnection = new RTCPeerConnection(configuration);
+    this.peerConnection = new RTCPeerConnection();
 
     // Attach the stream received from Janus to the video element
     this.peerConnection.ontrack = (event) => {
       this.videoElement.nativeElement.srcObject = event.streams[0];
     };
-
-    // Setup signaling (here, you'd normally connect to Janus or a signaling server)
-    // this.createOffer();
   }
 
   createCamera() {
-    // POST mediamtx.addr:8080/cameras {}
+    // POST mediamtx.addr:8080/cameras {ID: str, analysisMode: str, source: str, enableTranscoding: bool, maxReaders?: int}
+    // POST notif-service.addr:8080/add {camera_id: str, [{ui_popup?: bool, webhook_url?: str, smtp...}]}
+    // GET notif-service.addr:8080/notifications/{cameraID} -> SSE stream
   }
-
-  // async createOffer() {
-  //   const offer = await this.peerConnection.createOffer();
-  //   await this.peerConnection.setLocalDescription(offer);
-
-  //   // Send the offer to the signaling server (e.g., Janus Gateway)
-  //   this.sendToSignalingServer(offer);
-  // }
-
-  // sendToSignalingServer(offer: RTCSessionDescriptionInit) {
-  //   // Here you'd implement WebSocket communication with Janus or the media server
-  //   // This is a placeholder function.
-  //   console.log('Sending offer to signaling server:', offer);
-  // }
 }
