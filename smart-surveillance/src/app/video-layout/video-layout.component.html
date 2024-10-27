@@ -5,8 +5,11 @@
     <button class="action-btn">Connect Camera</button>
   </div>
 
+  <div *ngIf="notification">{{ notification }}</div>
+
   <div *ngSwitchCase="1" class="single-camera">
     <video #video1 [srcObject]="cameras[0]?.stream" autoplay playsinline></video>
+    <!-- <iframe src="http://mediamtx-ip:8889/mystream" scrolling="no"></iframe> -->
     <button class="action-btn">Connect Camera</button>
   </div>
 

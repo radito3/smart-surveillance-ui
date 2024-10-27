@@ -1,4 +1,5 @@
 import { Component, ElementRef, OnInit } from '@angular/core';
+import { NotificationService } from './notification.service';
 
 @Component({
   selector: 'app-video-layout',
@@ -15,12 +16,20 @@ export class VideoLayoutComponent implements OnInit {
   videoElement!: ElementRef;
   peerConnection!: RTCPeerConnection;
 
-  constructor() {}
+  notification: string | null = null;
+
+  constructor(private notificationService: NotificationService) {}
 
   ngOnInit(): void {
-    // Simulate camera connections for demo
     this.initializeDemoCameras();
     this.setupWebRTC();
+  
+    this.notificationService.notifications$.subscribe({
+      next: (message) => {
+        this.notification = message;
+        setTimeout(() => this.notification = null, 5000); // auto-hide after 5 seconds
+      }
+    });
   }
 
   initializeDemoCameras() {
@@ -54,20 +63,24 @@ export class VideoLayoutComponent implements OnInit {
     };
 
     // Setup signaling (here, you'd normally connect to Janus or a signaling server)
-    this.createOffer();
+    // this.createOffer();
   }
 
-  async createOffer() {
-    const offer = await this.peerConnection.createOffer();
-    await this.peerConnection.setLocalDescription(offer);
-
-    // Send the offer to the signaling server (e.g., Janus Gateway)
-    this.sendToSignalingServer(offer);
+  createCamera() {
+    // POST mediamtx.addr:8080/cameras {}
   }
 
-  sendToSignalingServer(offer: RTCSessionDescriptionInit) {
-    // Here you'd implement WebSocket communication with Janus or the media server
-    // This is a placeholder function.
-    console.log('Sending offer to signaling server:', offer);
-  }
+  // async createOffer() {
+  //   const offer = await this.peerConnection.createOffer();
+  //   await this.peerConnection.setLocalDescription(offer);
+
+  //   // Send the offer to the signaling server (e.g., Janus Gateway)
+  //   this.sendToSignalingServer(offer);
+  // }
+
+  // sendToSignalingServer(offer: RTCSessionDescriptionInit) {
+  //   // Here you'd implement WebSocket communication with Janus or the media server
+  //   // This is a placeholder function.
+  //   console.log('Sending offer to signaling server:', offer);
+  // }
 }
