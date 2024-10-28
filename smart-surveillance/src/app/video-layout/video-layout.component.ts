@@ -1,5 +1,7 @@
 import { Component, ElementRef, OnInit } from '@angular/core';
 import { NotificationService } from './notification.service';
+import { HttpClient } from '@angular/common/http';
+import * as Forge from 'node-forge';
 
 @Component({
   selector: 'app-video-layout',
@@ -18,9 +20,13 @@ export class VideoLayoutComponent implements OnInit {
 
   notification: string | null = null;
 
-  constructor(private notificationService: NotificationService) {}
+  private credsEncryptionKey: string = '';
+
+  constructor(private notificationService: NotificationService, private httpClient: HttpClient) {}
 
   ngOnInit(): void {
+    // TODO: perform a GET /endpoints to check any existing cameras, in case the UI pod has been restarted
+
     this.initializeDemoCameras();
     this.setupWebRTC();
   
@@ -29,6 +35,11 @@ export class VideoLayoutComponent implements OnInit {
         this.notification = message;
         setTimeout(() => this.notification = null, 5000); // auto-hide after 5 seconds
       }
+    });
+
+    this.httpClient.get('/config/public_key.pem', { responseType: 'text' })
+      .subscribe(publicKey => {
+        this.credsEncryptionKey = publicKey;
     });
   }
 
@@ -46,6 +57,19 @@ export class VideoLayoutComponent implements OnInit {
       .catch(err => {
         console.error('Error accessing cameras:', err);
       });
+  }
+
+  private encryptCredentials(creds: string): string {
+    // openssl genpkey -algorithm RSA -out private_key.pem -pkeyopt rsa_keygen_bits:4096
+    // openssl rsa -pubout -in private_key.pem -out public_key.pem
+
+    // if there are webhook or smtp credentials, encrypt them with the public key
+    // before sending to the notification service
+
+    const pubKey = Forge.pki.publicKeyFromPem(this.credsEncryptionKey);
+
+    const encryptedCreds = pubKey.encrypt(creds);
+    return encryptedCreds;
   }
 
   setupWebRTC() {
