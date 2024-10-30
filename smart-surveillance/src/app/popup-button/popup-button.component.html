@@ -1,0 +1,19 @@
+<button
+  mat-icon-button
+  class="main-button"
+  [@spin]="spinState"
+  (click)="toggleButtons()"
+>
+  <mat-icon>{{ isExpanded ? 'close' : 'menu' }}</mat-icon>
+</button>
+
+<div
+  *ngFor="let button of [1, 2, 3]; let i = index"
+  class="small-button"
+  [@popOut]="isExpanded ? 'visible' : 'hidden'"
+  [style.bottom.px]="(i + 1) * 60"
+>
+  <button mat-mini-fab color="accent">
+    <mat-icon>favorite</mat-icon>
+  </button>
+</div>

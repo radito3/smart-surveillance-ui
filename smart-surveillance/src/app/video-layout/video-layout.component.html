@@ -7,6 +7,8 @@
 
   <div *ngIf="notification">{{ notification }}</div>
 
+  <!-- TODO: add a message strip, saying "Recoding is currently unsupported" -->
+
   <div *ngSwitchCase="1" class="single-camera">
     <video #video1 [srcObject]="cameras[0]?.stream" autoplay playsinline></video>
     <!-- <iframe src="http://mediamtx-ip:8889/mystream" scrolling="no"></iframe> -->

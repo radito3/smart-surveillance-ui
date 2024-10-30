@@ -63,9 +63,6 @@ export class VideoLayoutComponent implements OnInit {
     // openssl genpkey -algorithm RSA -out private_key.pem -pkeyopt rsa_keygen_bits:4096
     // openssl rsa -pubout -in private_key.pem -out public_key.pem
 
-    // if there are webhook or smtp credentials, encrypt them with the public key
-    // before sending to the notification service
-
     const pubKey = Forge.pki.publicKeyFromPem(this.credsEncryptionKey);
 
     const encryptedCreds = pubKey.encrypt(creds);
@@ -83,8 +80,8 @@ export class VideoLayoutComponent implements OnInit {
   }
 
   createCamera() {
-    // POST mediamtx.addr:8080/cameras {ID: str, analysisMode: str, source: str, enableTranscoding: bool, maxReaders?: int}
-    // POST notif-service.addr:8080/add {camera_id: str, [{ui_popup?: bool, webhook_url?: str, smtp...}]}
-    // GET notif-service.addr:8080/notifications/{cameraID} -> SSE stream
+    // POST mediamtx/cameras {ID: str, analysisMode: str, source: str, enableTranscoding: bool, maxReaders?: int}
+    // POST notification-service/configs {camera_id: str, [{ui_popup?: bool, webhook_url?: str, smtp...}]}
+    // GET notification-service/notifications/{cameraID} -> SSE stream
   }
 }
