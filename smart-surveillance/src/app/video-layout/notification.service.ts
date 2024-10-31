@@ -9,8 +9,8 @@ export class NotificationService {
 
   constructor(private zone: NgZone) {}
 
-  public connectToNotifications(cameraId: string) {
-    const eventSource = new EventSource('http://notif-service.addr:8080/notifications/' + cameraId);
+  public connectToNotificationsChannel(cameraId: string) {
+    const eventSource = new EventSource('http://notification-service.hub.svc.cluster.local/notifications/' + cameraId);
 
     eventSource.onmessage = (event) => {
       this.zone.run(() => {
