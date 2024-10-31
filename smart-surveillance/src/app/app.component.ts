@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { PopupButtonComponent } from './popup-button/popup-button.component';
+import { VideoLayoutComponent } from './video-layout/video-layout.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, PopupButtonComponent],
+  imports: [RouterOutlet, PopupButtonComponent, VideoLayoutComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })

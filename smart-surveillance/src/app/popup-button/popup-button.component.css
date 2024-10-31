@@ -45,3 +45,38 @@
   opacity: 0;
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
+
+.main-button-container {
+  position: relative;
+}
+
+.hover-tooltip {
+  position: absolute;
+  left: 3.75rem; /* 60px to rem */ /* Position tooltip to the right of the main button */
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.3125rem 0.625rem; /* 5px 10px to rem */
+  border-radius: 0.25rem; /* 4px to rem */
+  white-space: nowrap;
+  font-size: 0.875rem; /* 14px to rem */
+  z-index: 10;
+}
+
+.small-button-container {
+  position: absolute;
+  left: 0.5rem; /* 8px to rem */
+  display: flex;
+  align-items: center;
+  gap: 0.625rem; /* 10px to rem */
+}
+
+.persistent-tooltip {
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.25rem 0.5rem; /* 4px 8px to rem */
+  border-radius: 0.25rem; /* 4px to rem */
+  font-size: 0.875rem; /* 14px to rem */
+  white-space: nowrap;
+}

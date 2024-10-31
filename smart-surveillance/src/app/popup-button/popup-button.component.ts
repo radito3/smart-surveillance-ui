@@ -23,14 +23,29 @@ import { trigger, state, style, transition, animate } from '@angular/animations'
       state('end', style({ transform: 'rotate(90deg)' })),
       transition('start => end', animate('300ms ease-in-out')),
     ]),
+    trigger('hoverTooltip', [
+      state('hidden', style({ opacity: 0 })),
+      state('visible', style({ opacity: 1 })),
+      transition('hidden => visible', animate('300ms ease-in')),
+      transition('visible => hidden', animate('500ms ease-out'))
+    ])
   ]
 })
 export class PopupButtonComponent {
   isExpanded = false;
   spinState = 'start';
+  hoverTooltipVisible = false;
 
   toggleButtons() {
     this.isExpanded = !this.isExpanded;
     this.spinState = this.spinState === 'start' ? 'end' : 'start';
+  }
+
+  showHoverTooltip() {
+    setTimeout(() => this.hoverTooltipVisible = true, 300);
+  }
+
+  hideHoverTooltip() {
+    setTimeout(() => this.hoverTooltipVisible = false, 500);
   }
 }
