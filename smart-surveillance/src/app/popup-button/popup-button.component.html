@@ -1,8 +1,8 @@
 <div
   class="main-button-container"
-  (mouseenter)="showHoverTooltip()"
-  (mouseleave)="hideHoverTooltip()"
 >
+<!-- (mouseenter)="showHoverTooltip()"
+  (mouseleave)="hideHoverTooltip()" -->
   <button
     mat-icon-button
     class="main-button"
@@ -13,13 +13,13 @@
     <mat-icon>{{ isExpanded ? 'close' : 'menu' }}</mat-icon>
   </button>
 
-  <div
+  <!-- <div
     class="hover-tooltip"
     *ngIf="!isExpanded && hoverTooltipVisible"
     [@hoverTooltip]="hoverTooltipVisible ? 'visible' : 'hidden'"
   >
     Connect camera
-  </div>
+  </div> -->
 </div>
 
 <div
@@ -35,7 +35,7 @@
   >
     <mat-icon>favorite</mat-icon>
   </button>
-  <div *ngIf="isExpanded" class="persistent-tooltip">Button {{ button }}</div>
+  <!-- <div *ngIf="isExpanded" class="persistent-tooltip">Button {{ button }}</div> -->
 </div>
 
 <!-- View Playback button (disabled?) (play icon) -> leading to a dialog with the current videos listed (with paging),

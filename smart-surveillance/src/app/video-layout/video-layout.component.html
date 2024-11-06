@@ -1,8 +1,24 @@
+<!-- <video #video
+  disablepictureinpicture 
+  disableremoteplayback 
+  controlsList="nodownload,nofullscreen,noremoteplayback" 
+  autoplay 
+  playsinline
+  muted
+  poster="https://smallimg.pngkey.com/png/small/110-1108086_no-png-icon-broken-camera-icon-png.png"></video> -->
+
+<canvas #canvas id="video-canvas" width="640" height="640"></canvas>
+
+<!-- <iframe src="http://localhost:8888/test" scrolling="no"></iframe> -->
+
+<button #btnStart (click)="startStream()" mat-button>Connect Camera</button>
+<button #btnEnd (click)="stopStream()">Stop Stream</button>
+
+
 <div class="video-container" [ngSwitch]="cameras.length">
 
   <div *ngSwitchCase="0" class="no-cameras">
     <p>No Cameras</p>
-    <button class="action-btn">Connect Camera</button>
   </div>
 
   <div *ngIf="notification">{{ notification }}</div>
@@ -11,21 +27,17 @@
 
   <div *ngSwitchCase="1" class="single-camera">
     <video #video1 [srcObject]="cameras[0]?.stream" autoplay playsinline></video>
-    <!-- <iframe src="http://mediamtx-ip:8889/mystream" scrolling="no"></iframe> -->
-    <button class="action-btn">Connect Camera</button>
   </div>
 
   <div *ngSwitchCase="2" class="two-cameras">
     <video #video2 [srcObject]="cameras[0]?.stream" autoplay playsinline></video>
     <video #video3 [srcObject]="cameras[1]?.stream" autoplay playsinline></video>
-    <button class="action-btn">Connect Camera</button>
   </div>
 
   <div *ngSwitchCase="3" class="three-cameras">
     <video #video4 [srcObject]="cameras[0]?.stream" autoplay playsinline></video>
     <video #video5 [srcObject]="cameras[1]?.stream" autoplay playsinline></video>
     <video #video6 [srcObject]="cameras[2]?.stream" autoplay playsinline></video>
-    <button class="action-btn">Connect Camera</button>
   </div>
 
   <div *ngSwitchCase="4" class="four-cameras">
@@ -33,7 +45,6 @@
     <video #video8 [srcObject]="cameras[1]?.stream" autoplay playsinline></video>
     <video #video9 [srcObject]="cameras[2]?.stream" autoplay playsinline></video>
     <video #video10 [srcObject]="cameras[3]?.stream" autoplay playsinline></video>
-    <button class="action-btn">Connect Camera</button>
   </div>
 
   <!-- For future development... -->
@@ -43,7 +54,8 @@
     <video #video13 [srcObject]="cameras[2]?.stream" autoplay playsinline></video>
     <video #video14 [srcObject]="cameras[3]?.stream" autoplay playsinline></video>
     <p>Only the first 4 cameras will be displayed</p>
-    <button class="action-btn">Connect Camera</button>
   </div>
 
 </div>
+
+<!-- <app-popup-button /> -->
