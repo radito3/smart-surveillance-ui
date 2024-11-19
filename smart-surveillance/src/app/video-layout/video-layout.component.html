@@ -1,19 +1,7 @@
-<!-- <video #video
-  disablepictureinpicture 
-  disableremoteplayback 
-  controlsList="nodownload,nofullscreen,noremoteplayback" 
-  autoplay 
-  playsinline
-  muted
-  poster="https://smallimg.pngkey.com/png/small/110-1108086_no-png-icon-broken-camera-icon-png.png"></video> -->
-
-<canvas #canvas id="video-canvas" width="640" height="640"></canvas>
-
-<!-- <iframe src="http://localhost:8888/test" scrolling="no"></iframe> -->
+<canvas #canvas width="640" height="640"></canvas>
 
 <button #btnStart (click)="startStream()" mat-button>Connect Camera</button>
-<button #btnEnd (click)="stopStream()">Stop Stream</button>
-
+<button #btnEnd (click)="stopStream()" mat-button>Stop Stream</button>
 
 <div class="video-container" [ngSwitch]="cameras.length">
 
@@ -58,4 +46,4 @@
 
 </div>
 
-<!-- <app-popup-button /> -->
+<app-popup-button />
