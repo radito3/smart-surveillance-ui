@@ -1,7 +1,7 @@
 import { Component, ElementRef, OnInit, ViewChild, AfterViewInit, Inject } from '@angular/core';
 import { NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
 import { DOCUMENT } from '@angular/common';
-import { PopupButtonComponent } from "../popup-button/popup-button.component";
+import { ButtonsComponent } from "../buttons/buttons.component";
 import { NotificationService } from './notification.service';
 import { HttpClient } from '@angular/common/http';
 import * as Forge from 'node-forge';
@@ -12,7 +12,7 @@ import { loadPlayer, Player } from 'rtsp-relay/browser';
 @Component({
   selector: 'app-video-layout',
   standalone: true,
-  imports: [NgSwitch, NgSwitchCase, NgSwitchDefault, NgIf, MatButton, PopupButtonComponent],
+  imports: [NgSwitch, NgSwitchCase, NgSwitchDefault, NgIf, MatButton, ButtonsComponent],
   templateUrl: './video-layout.component.html',
   styleUrl: './video-layout.component.css'
 })
@@ -60,7 +60,7 @@ export class VideoLayoutComponent implements OnInit {
     return encryptedCreds;
   }
 
-  startStream() {
+  startStream(cameraConfig: any) {
     // if (Hls.isSupported()) {
     //   this.hls = new Hls();
     //   this.hls.loadSource(this.streamUrl);
@@ -82,14 +82,14 @@ export class VideoLayoutComponent implements OnInit {
     })
   }
 
-  stopStream() {
+  stopStream(cameraID: string) {
     // if (this.hls) {
     //   this.hls.destroy();
     // }
     // this.videoElement.nativeElement.src = '';
   }
 
-  createCamera() {
+  private createCamera() {
     // POST mediamtx/cameras {ID: str, analysisMode: str, source: str, enableTranscoding: bool, maxReaders?: int}
     // POST notification-service/configs {camera_id: str, [{ui_popup?: bool, webhook_url?: str, smtp...}]}
     // GET notification-service/notifications/{cameraID} -> SSE stream

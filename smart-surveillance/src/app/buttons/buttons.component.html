@@ -1,0 +1,82 @@
+<div
+  class="main-button-container"
+>
+  <button
+    mat-fab
+    class="main-button"
+    (click)="openDialog()"
+  >
+    <mat-icon>add</mat-icon>
+  </button>
+
+  <div class="hover-tooltip">
+    Connect camera
+  </div>
+</div>
+
+<div class="play-recording-button-container">
+  <button
+    mat-mini-fab
+    color="accent"
+    class="play-recording-button"
+    disabled="true"
+  >
+    <mat-icon>play_arrow</mat-icon>
+    <!-- OR -->
+    <!-- <mat-icon>play_circle_filled</mat-icon> -->
+  </button>
+  <!-- this will lead to a dialog with the current videos listed (with paging),
+     which will redirect to a new page /recordings with a single video output element with play, pause, forward, rewind and back buttons -->
+  <div class="playback-tooltip">View Playback</div>
+</div>
+
+<div class="notifications-button-container">
+  <button
+    mat-mini-fab
+    color="accent"
+    class="notifications-button"
+  >
+    <mat-icon>notifications</mat-icon>
+  </button>
+  <!-- this will lead to a dialog with all the possible notification options (popup, webhook, email) -->
+  <div class="notifications-tooltip">Configure notifications</div>
+</div>
+
+<div class="analytics-button-container">
+  <button
+    mat-mini-fab
+    color="accent"
+    class="analytics-button"
+  >
+    <mat-icon>analytics</mat-icon>
+  </button>
+  <!-- this will start analysis for all present cameras -->
+  <div class="analytics-tooltip">Start analysis</div>
+</div>
+
+<div class="recording-button-container">
+  <button
+    mat-mini-fab
+    color="accent"
+    class="recording-button"
+    disabled="true"
+  >
+    <mat-icon>fiber_smart_record</mat-icon>
+  </button>
+  <!-- this will lead to a dropdown? menu of current cameras -->
+  <div class="recording-tooltip">Start recording</div>
+</div>
+
+<div class="anonymyze-button-container">
+  <button
+    mat-mini-fab
+    color="accent"
+    class="anonymyze-button"
+  >
+    <mat-icon>not_interested</mat-icon>
+  </button>
+  <!-- this will destroy current players, and connect to the new /anon-{path} endpoints -->
+  <div class="anonymyze-tooltip">Anonymyze</div>
+</div>
+
+<!-- What about a stop/disconnect camera button? -->

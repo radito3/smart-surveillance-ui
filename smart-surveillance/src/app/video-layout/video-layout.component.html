@@ -1,8 +1,3 @@
-<canvas #canvas width="640" height="640"></canvas>
-
-<button #btnStart (click)="startStream()" mat-button>Connect Camera</button>
-<button #btnEnd (click)="stopStream()" mat-button>Stop Stream</button>
-
 <div class="video-container" [ngSwitch]="cameras.length">
 
   <div *ngSwitchCase="0" class="no-cameras">
@@ -14,36 +9,36 @@
   <!-- TODO: add a message strip, saying "Recoding is currently unsupported" -->
 
   <div *ngSwitchCase="1" class="single-camera">
-    <video #video1 [srcObject]="cameras[0]?.stream" autoplay playsinline></video>
+    <canvas #video1  ></canvas>
   </div>
 
   <div *ngSwitchCase="2" class="two-cameras">
-    <video #video2 [srcObject]="cameras[0]?.stream" autoplay playsinline></video>
-    <video #video3 [srcObject]="cameras[1]?.stream" autoplay playsinline></video>
+    <canvas #video2  ></canvas>
+    <canvas #video3  ></canvas>
   </div>
 
   <div *ngSwitchCase="3" class="three-cameras">
-    <video #video4 [srcObject]="cameras[0]?.stream" autoplay playsinline></video>
-    <video #video5 [srcObject]="cameras[1]?.stream" autoplay playsinline></video>
-    <video #video6 [srcObject]="cameras[2]?.stream" autoplay playsinline></video>
+    <canvas #video4  ></canvas>
+    <canvas #video5  ></canvas>
+    <canvas #video6  ></canvas>
   </div>
 
   <div *ngSwitchCase="4" class="four-cameras">
-    <video #video7 [srcObject]="cameras[0]?.stream" autoplay playsinline></video>
-    <video #video8 [srcObject]="cameras[1]?.stream" autoplay playsinline></video>
-    <video #video9 [srcObject]="cameras[2]?.stream" autoplay playsinline></video>
-    <video #video10 [srcObject]="cameras[3]?.stream" autoplay playsinline></video>
+    <canvas #video7  ></canvas>
+    <canvas #video8  ></canvas>
+    <canvas #video9  ></canvas>
+    <canvas #video10  ></canvas>
   </div>
 
   <!-- For future development... -->
   <div *ngSwitchDefault class="four-cameras">
-    <video #video11 [srcObject]="cameras[0]?.stream" autoplay playsinline></video>
-    <video #video12 [srcObject]="cameras[1]?.stream" autoplay playsinline></video>
-    <video #video13 [srcObject]="cameras[2]?.stream" autoplay playsinline></video>
-    <video #video14 [srcObject]="cameras[3]?.stream" autoplay playsinline></video>
+    <canvas #video11  ></canvas>
+    <canvas #video12  ></canvas>
+    <canvas #video13  ></canvas>
+    <canvas #video14 ></canvas>
     <p>Only the first 4 cameras will be displayed</p>
   </div>
 
 </div>
 
-<app-popup-button />
+<app-buttons (cameraAdded)="startStream($event)" />
