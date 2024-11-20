@@ -76,3 +76,22 @@
     height: auto;
   }
   
+
+/* ---- */
+.canvas-container {
+  position: relative;
+  display: inline-block; /* Adjust to fit your layout */
+}
+
+canvas {
+  display: block;
+}
+
+.close-button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  background-color: white; /* Optional for contrast */
+  border-radius: 50%;
+}

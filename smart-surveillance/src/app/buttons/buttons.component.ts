@@ -19,12 +19,15 @@ export class ButtonsComponent {
   @Output() cameraAdded: EventEmitter<any> = new EventEmitter();
   @Output() notificationsConfigUpdated: EventEmitter<any> = new EventEmitter();
 
+  private cameraConfigs: Map<string, any> = new Map();
+
   constructor(private dialog: MatDialog, private httpClient: HttpClient) {}
 
   openAddCameraDialog() {
     const dialogRef = this.dialog.open(AddCameraDialogComponent);
     dialogRef.componentInstance.submitCamera.subscribe((cameraConfig: any) => {
       this.cameraAdded.emit(cameraConfig);
+      this.cameraConfigs.set("<ID>", cameraConfig);
     });
   }
 
@@ -36,14 +39,13 @@ export class ButtonsComponent {
   }
 
   startAnalysis() {
-    // the ML pipeline deployment is already created when creating the camera endpoint...
-    // maybe store the camera config in the in-memory array in the video-layout component
-    // and use it here
-    this.httpClient.post('placeholder', null);
+    for (let [ID, config] of this.cameraConfigs) {
+      this.httpClient.post('http://mediamtx.hub.svc.cluster.local/analysis', {'ID': ID, 'config': config}); 
+    }
   }
 
   anonymyze() {
-    this.httpClient.post('/anonymyze', null);
+    this.httpClient.post('http://mediamtx.hub.svc.cluster.local/anonymyze', {});
     // recreate the players with a anon- prefixed path
   }
 

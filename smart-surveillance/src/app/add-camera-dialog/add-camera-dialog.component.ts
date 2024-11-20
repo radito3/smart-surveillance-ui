@@ -15,6 +15,6 @@ export class AddCameraDialogComponent {
   constructor(private httpClient: HttpClient) {}
 
   submit() {
-    // POST mediamtx/cameras {ID: str, analysisMode: str, source: str, enableTranscoding: bool, maxReaders?: int}
+    // POST mediamtx/cameras {ID: str, source: str, enableTranscoding: bool, maxReaders?: int}
   }
 }

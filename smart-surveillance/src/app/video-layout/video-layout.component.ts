@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild, AfterViewInit, Inject } from '@angular/core';
+import { Component, OnInit, Inject } from '@angular/core';
 import { NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
 import { DOCUMENT } from '@angular/common';
 import { ButtonsComponent } from "../buttons/buttons.component";
@@ -7,6 +7,7 @@ import { HttpClient } from '@angular/common/http';
 import * as Forge from 'node-forge';
 import Hls from 'hls.js';
 import { MatButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
 // import { loadPlayer, Player } from 'rtsp-relay/browser';
 // @ts-ignore
 import JSMpeg from '@cycjimmy/jsmpeg-player';
@@ -15,7 +16,7 @@ import * as dashjs from 'dashjs';
 @Component({
   selector: 'app-video-layout',
   standalone: true,
-  imports: [NgSwitch, NgSwitchCase, NgSwitchDefault, NgIf, MatButton, ButtonsComponent],
+  imports: [NgSwitch, NgSwitchCase, NgSwitchDefault, NgIf, MatButton, MatIcon, ButtonsComponent],
   templateUrl: './video-layout.component.html',
   styleUrl: './video-layout.component.css'
 })
