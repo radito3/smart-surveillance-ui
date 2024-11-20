@@ -1,10 +1,8 @@
-<div
-  class="main-button-container"
->
+<div class="main-button-container">
   <button
     mat-fab
     class="main-button"
-    (click)="openDialog()"
+    (click)="openAddCameraDialog()"
   >
     <mat-icon>add</mat-icon>
   </button>
@@ -21,6 +19,7 @@
     class="play-recording-button"
     disabled="true"
   >
+    <!-- maybe have a popup tooltip: "Recoding is currently unsupported" -->
     <mat-icon>play_arrow</mat-icon>
     <!-- OR -->
     <!-- <mat-icon>play_circle_filled</mat-icon> -->
@@ -35,6 +34,7 @@
     mat-mini-fab
     color="accent"
     class="notifications-button"
+    (click)="openConfigNotificationsDialog()"
   >
     <mat-icon>notifications</mat-icon>
   </button>
@@ -47,6 +47,7 @@
     mat-mini-fab
     color="accent"
     class="analytics-button"
+    (click)="startAnalysis()"
   >
     <mat-icon>analytics</mat-icon>
   </button>
@@ -72,11 +73,10 @@
     mat-mini-fab
     color="accent"
     class="anonymyze-button"
+    (click)="anonymyze()"
   >
     <mat-icon>not_interested</mat-icon>
   </button>
   <!-- this will destroy current players, and connect to the new /anon-{path} endpoints -->
   <div class="anonymyze-tooltip">Anonymyze</div>
 </div>
-
-<!-- What about a stop/disconnect camera button? -->

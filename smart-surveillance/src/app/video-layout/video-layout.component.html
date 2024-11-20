@@ -1,44 +1,32 @@
 <div class="video-container" [ngSwitch]="cameras.length">
 
-  <div *ngSwitchCase="0" class="no-cameras">
-    <p>No Cameras</p>
-  </div>
-
   <div *ngIf="notification">{{ notification }}</div>
 
-  <!-- TODO: add a message strip, saying "Recoding is currently unsupported" -->
-
-  <div *ngSwitchCase="1" class="single-camera">
+  <div #singleCamera *ngSwitchCase="1" class="single-camera">
     <canvas #video1  ></canvas>
   </div>
 
-  <div *ngSwitchCase="2" class="two-cameras">
+  <div #twoCameras *ngSwitchCase="2" class="two-cameras">
     <canvas #video2  ></canvas>
     <canvas #video3  ></canvas>
   </div>
 
-  <div *ngSwitchCase="3" class="three-cameras">
+  <div #threeCameras *ngSwitchCase="3" class="three-cameras">
     <canvas #video4  ></canvas>
     <canvas #video5  ></canvas>
     <canvas #video6  ></canvas>
   </div>
 
-  <div *ngSwitchCase="4" class="four-cameras">
+  <div #fourCameras *ngSwitchCase="4" class="four-cameras">
     <canvas #video7  ></canvas>
     <canvas #video8  ></canvas>
     <canvas #video9  ></canvas>
     <canvas #video10  ></canvas>
   </div>
 
-  <!-- For future development... -->
-  <div *ngSwitchDefault class="four-cameras">
-    <canvas #video11  ></canvas>
-    <canvas #video12  ></canvas>
-    <canvas #video13  ></canvas>
-    <canvas #video14 ></canvas>
-    <p>Only the first 4 cameras will be displayed</p>
+  <div *ngSwitchDefault class="no-cameras">
+    <p>No Cameras connected</p>
   </div>
 
+  <app-buttons (cameraAdded)="startStream($event)" />
 </div>
-
-<app-buttons (cameraAdded)="startStream($event)" />

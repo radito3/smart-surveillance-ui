@@ -1,3 +1,4 @@
+import { HttpClient } from '@angular/common/http';
 import { Component, EventEmitter, Output } from '@angular/core';
 
 @Component({
@@ -8,6 +9,12 @@ import { Component, EventEmitter, Output } from '@angular/core';
   styleUrl: './add-camera-dialog.component.css'
 })
 export class AddCameraDialogComponent {
+
   @Output() submitCamera = new EventEmitter<any>();
 
+  constructor(private httpClient: HttpClient) {}
+
+  submit() {
+    // POST mediamtx/cameras {ID: str, analysisMode: str, source: str, enableTranscoding: bool, maxReaders?: int}
+  }
 }
