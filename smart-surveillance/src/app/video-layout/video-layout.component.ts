@@ -12,6 +12,7 @@ import { MatIcon } from '@angular/material/icon';
 // @ts-ignore
 import JSMpeg from '@cycjimmy/jsmpeg-player';
 import * as dashjs from 'dashjs';
+import { Notification } from '../models/notification.model';
 
 @Component({
   selector: 'app-video-layout',
@@ -39,8 +40,8 @@ export class VideoLayoutComponent implements OnInit {
     // TODO: perform a GET /endpoints to check any existing cameras, in case the UI pod has been restarted
 
     this.notificationService.notifications$.subscribe({
-      next: (message) => {
-        this.notification = message;
+      next: (payload: Notification) => {
+        this.notification = payload.message;
         setTimeout(() => this.notification = null, 10000); // auto-hide after 10 seconds
       }
     });

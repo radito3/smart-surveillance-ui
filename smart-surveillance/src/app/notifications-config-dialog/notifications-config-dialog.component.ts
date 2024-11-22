@@ -25,7 +25,7 @@ export class NotificationsConfigDialogComponent implements OnInit {
     // POST notification-service/configs {camera_id: str, [{ui_popup?: bool, webhook_url?: str, smtp...}]}
     
     // if ui_popup is selected: 
-    this.notificationService.connectToNotificationsChannel(this.cameraID);
+    this.notificationService.connectToNotificationsChannel();
   }
 
 }

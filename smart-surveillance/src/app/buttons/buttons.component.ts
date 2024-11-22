@@ -40,7 +40,7 @@ export class ButtonsComponent {
 
   startAnalysis() {
     for (let [ID, config] of this.cameraConfigs) {
-      this.httpClient.post('http://mediamtx.hub.svc.cluster.local/analysis', {'ID': ID, 'config': config}); 
+      this.httpClient.post('http://mediamtx.hub.svc.cluster.local/analysis/'+ ID + '?analysisMode=' + config["analysisMode"], null); 
     }
   }
 
