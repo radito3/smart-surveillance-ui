@@ -6,6 +6,8 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { AddCameraDialogComponent } from '../add-camera-dialog/add-camera-dialog.component';
 import { NotificationsConfigDialogComponent } from '../notifications-config-dialog/notifications-config-dialog.component';
 import { HttpClient } from '@angular/common/http';
+import { NotificationConfig } from '../models/notification-config.model';
+import { NotificationService } from '../services/notification.service';
 
 @Component({
   selector: 'app-buttons',
@@ -17,11 +19,11 @@ import { HttpClient } from '@angular/common/http';
 export class ButtonsComponent {
 
   @Output() cameraAdded: EventEmitter<any> = new EventEmitter();
-  @Output() notificationsConfigUpdated: EventEmitter<any> = new EventEmitter();
 
   private cameraConfigs: Map<string, any> = new Map();
+  private notificationsChannelOpen: boolean = false;
 
-  constructor(private dialog: MatDialog, private httpClient: HttpClient) {}
+  constructor(private dialog: MatDialog, private httpClient: HttpClient, private notificationService: NotificationService) {}
 
   openAddCameraDialog() {
     const dialogRef = this.dialog.open(AddCameraDialogComponent);
@@ -33,8 +35,15 @@ export class ButtonsComponent {
 
   openConfigNotificationsDialog() {
     const dialogRef = this.dialog.open(NotificationsConfigDialogComponent);
-    dialogRef.componentInstance.configUpdated.subscribe((notificationsConfig: any) => {
-      this.notificationsConfigUpdated.emit(notificationsConfig);
+    dialogRef.componentInstance.configUpdated.subscribe((notificationsConfig: NotificationConfig) => {
+      if (notificationsConfig.uiPopup && !this.notificationsChannelOpen) {
+        this.notificationService.connectToNotificationsChannel();
+        this.notificationsChannelOpen = true;
+      }
+      if (!notificationsConfig.uiPopup && this.notificationsChannelOpen) {
+        this.notificationService.disconnectNotificationChannel();
+        this.notificationsChannelOpen = false;
+      }
     });
   }
 
@@ -45,8 +54,10 @@ export class ButtonsComponent {
   }
 
   anonymyze() {
-    this.httpClient.post('http://mediamtx.hub.svc.cluster.local/anonymyze', {});
-    // recreate the players with a anon- prefixed path
+    for (let ID of this.cameraConfigs.keys()) {
+      this.httpClient.post('http://mediamtx.hub.svc.cluster.local/anonymyze/camera-' + ID, null);
+      // recreate the players with a anon- prefixed path
+    }
   }
 
 }

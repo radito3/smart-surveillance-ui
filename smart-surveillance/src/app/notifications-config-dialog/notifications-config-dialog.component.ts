@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { NotificationService } from '../services/notification.service';
+import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { NotificationConfig } from '../models/notification-config.model';
 
 @Component({
   selector: 'app-notifications-config-dialog',
@@ -11,11 +11,9 @@ import { NotificationService } from '../services/notification.service';
 })
 export class NotificationsConfigDialogComponent implements OnInit {
 
-  @Input() cameraID: string = '';
-  
-  @Output() configUpdated: EventEmitter<any> = new EventEmitter<any>();
+  @Output() configUpdated: EventEmitter<NotificationConfig> = new EventEmitter<NotificationConfig>();
 
-  constructor(private httpClient: HttpClient, private notificationService: NotificationService) {}
+  constructor(private httpClient: HttpClient) {}
 
   ngOnInit(): void {
     // POST notification-service/configs with default config
@@ -23,9 +21,6 @@ export class NotificationsConfigDialogComponent implements OnInit {
 
   submit() {
     // POST notification-service/configs {camera_id: str, [{ui_popup?: bool, webhook_url?: str, smtp...}]}
-    
-    // if ui_popup is selected: 
-    this.notificationService.connectToNotificationsChannel();
   }
 
 }
