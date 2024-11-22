@@ -10,13 +10,13 @@ import { NotificationConfig } from '../models/notification-config.model';
 import { NotificationService } from '../services/notification.service';
 
 @Component({
-  selector: 'app-buttons',
+  selector: 'app-controls',
   standalone: true,
   imports: [MatDialogModule, MatButtonModule, MatIconModule],
-  templateUrl: './buttons.component.html',
-  styleUrl: './buttons.component.css'
+  templateUrl: './controls.component.html',
+  styleUrl: './controls.component.css'
 })
-export class ButtonsComponent {
+export class ControlsComponent {
 
   @Output() cameraAdded: EventEmitter<any> = new EventEmitter();
 

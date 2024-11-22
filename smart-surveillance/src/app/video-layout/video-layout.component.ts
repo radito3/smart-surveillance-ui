@@ -1,7 +1,7 @@
 import { Component, OnInit, Inject } from '@angular/core';
 import { NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
 import { DOCUMENT } from '@angular/common';
-import { ButtonsComponent } from "../buttons/buttons.component";
+import { ControlsComponent } from "../controls/controls.component";
 import { NotificationService } from '../services/notification.service';
 import { HttpClient } from '@angular/common/http';
 import * as Forge from 'node-forge';
@@ -17,7 +17,7 @@ import { Notification } from '../models/notification.model';
 @Component({
   selector: 'app-video-layout',
   standalone: true,
-  imports: [NgSwitch, NgSwitchCase, NgSwitchDefault, NgIf, MatButton, MatIcon, ButtonsComponent],
+  imports: [NgSwitch, NgSwitchCase, NgSwitchDefault, NgIf, MatButton, MatIcon, ControlsComponent],
   templateUrl: './video-layout.component.html',
   styleUrl: './video-layout.component.css'
 })
