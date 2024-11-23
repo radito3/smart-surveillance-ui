@@ -22,7 +22,7 @@ import { Notification } from '../models/notification.model';
   styleUrl: './video-layout.component.css'
 })
 export class VideoLayoutComponent implements OnInit {
-  cameras: Array<string> = [];
+  cameraIDs: Array<string> = [];
 
   cameraPlayers: Array<JSMpeg.Player | Hls | dashjs.MediaPlayerClass | null> = [];
 
@@ -67,7 +67,7 @@ export class VideoLayoutComponent implements OnInit {
 
     if (source.startsWith("rtsp") || source.startsWith("rtmp")) {
       // convert to ws endpoint
-      const canvas = this.document.getElementById('canvas' + this.cameras.length) as HTMLCanvasElement;
+      const canvas = this.document.getElementById('canvas' + this.cameraIDs.length) as HTMLCanvasElement;
       this.cameraPlayers.push(this.playWsStream(canvas, source));
     } else if (source.startsWith("http")) {
       if (source.endsWith("m3u8")) {
@@ -83,7 +83,7 @@ export class VideoLayoutComponent implements OnInit {
   }
 
   private getCurrentPlaybackParentElement(): HTMLDivElement | null {
-    switch (this.cameras.length) {
+    switch (this.cameraIDs.length) {
       case 1: return this.document.getElementById('singleCamera') as HTMLDivElement;
       case 2: return this.document.getElementById('twoCameras') as HTMLDivElement;
       case 3: return this.document.getElementById('threeCameras') as HTMLDivElement;
@@ -147,7 +147,7 @@ export class VideoLayoutComponent implements OnInit {
   }
 
   stopStream(cameraID: string) {
-    const index = this.cameras.indexOf(cameraID);
+    const index = this.cameraIDs.indexOf(cameraID);
 
     const player = this.cameraPlayers[index];
 
@@ -164,6 +164,7 @@ export class VideoLayoutComponent implements OnInit {
     //   player.destroy();
     // }
     this.cameraPlayers.splice(index, 1);
+    this.cameraIDs.splice(index, 1);
   }
 
 }

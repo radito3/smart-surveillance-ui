@@ -1,17 +1,3 @@
-<div class="main-button-container">
-  <button
-    mat-fab
-    class="main-button"
-    (click)="openAddCameraDialog()"
-  >
-    <mat-icon>add</mat-icon>
-  </button>
-
-  <div class="hover-tooltip">
-    Connect camera
-  </div>
-</div>
-
 <div class="play-recording-button-container">
   <button
     mat-mini-fab
@@ -80,4 +66,19 @@
   </button>
   <!-- this will destroy current players, and connect to the new /anon-{path} endpoints -->
   <div class="anonymyze-tooltip">Anonymyze</div>
+</div>
+
+<div class="add-button-container">
+  <button
+    mat-fab
+    class="main-button"
+    (click)="openAddCameraDialog()"
+    [disabled]="cameraConfigs.size >= 4"
+  >
+    <mat-icon>add</mat-icon>
+  </button>
+
+  <div class="hover-tooltip">
+    Connect camera
+  </div>
 </div>
