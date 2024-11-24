@@ -1,15 +1,16 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 // import { trigger, state, style, transition, animate } from '@angular/animations';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { AddCameraDialogComponent } from '../add-camera-dialog/add-camera-dialog.component';
-import { NotificationsConfigDialogComponent } from '../notifications-config-dialog/notifications-config-dialog.component';
+import { ConfigDialogComponent } from '../config-dialog/config-dialog.component';
 import { HttpClient } from '@angular/common/http';
-import { NotificationConfig } from '../models/notification-config.model';
+import { AnalysisMode, Config } from '../models/config.model';
 import { NotificationService } from '../services/notification.service';
 import { BehaviorSubject, catchError, filter, map, of, retry, switchMap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { CameraConfig } from '../models/camera-config.model';
 
 @Component({
   selector: 'app-controls',
@@ -18,15 +19,16 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   templateUrl: './controls.component.html',
   styleUrl: './controls.component.css'
 })
-export class ControlsComponent implements OnChanges {
+export class ControlsComponent implements OnChanges, OnInit {
 
   @Input() cameraIDs: Array<string> = [];
 
-  @Output() cameraAdded: EventEmitter<any> = new EventEmitter();
+  @Output() cameraAdded: EventEmitter<CameraConfig> = new EventEmitter();
 
   analysisOpText: string = "Start";
+  cameraConfigs: Map<string, CameraConfig> = new Map();
 
-  cameraConfigs: Map<string, any> = new Map();
+  private analysisMode: AnalysisMode = AnalysisMode.Behaviour;
   private removedCameraIDs$ = new BehaviorSubject<string>('');
   private notificationsChannelOpen: boolean = false;
   private isAnalysisOn: boolean = false;
@@ -62,6 +64,10 @@ export class ControlsComponent implements OnChanges {
       });
   }
 
+  ngOnInit(): void {
+    // POST notification-service/configs with default config
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['cameraIDs'] && this.cameraIDs.length > 0) {
       let IDsNotPresent: string[] = [];
@@ -78,26 +84,27 @@ export class ControlsComponent implements OnChanges {
 
   openAddCameraDialog() {
     const dialogRef = this.dialog.open(AddCameraDialogComponent);
-    dialogRef.componentInstance.submitCamera.subscribe((cameraConfig: any) => {
+    dialogRef.componentInstance.submitCamera.subscribe((cameraConfig: CameraConfig) => {
       this.cameraAdded.emit(cameraConfig);
-      this.cameraConfigs.set("<ID>", cameraConfig);
+      this.cameraConfigs.set(cameraConfig.ID, cameraConfig);
       if (this.isAnalysisOn) {
-        this.httpClient.post('http://mediamtx.hub.svc.cluster.local/analysis/'+ ID + '?analysisMode=' + cameraConfig["analysisMode"], null)
+        this.httpClient.post('http://mediamtx.hub.svc.cluster.local/analysis/'+ cameraConfig.ID + '?analysisMode=' + this.analysisMode, null)
           .subscribe({
-            error: err => console.error('Could not start analysis for Camera ' + ID, err)
+            error: err => console.error('Could not start analysis for Camera ' + cameraConfig.ID, err)
           });
       }
     });
   }
 
-  openConfigNotificationsDialog() {
-    const dialogRef = this.dialog.open(NotificationsConfigDialogComponent);
-    dialogRef.componentInstance.configUpdated.subscribe((notificationsConfig: NotificationConfig) => {
-      if (notificationsConfig.uiPopup && !this.notificationsChannelOpen) {
+  openConfigDialog() {
+    const dialogRef = this.dialog.open(ConfigDialogComponent);
+    dialogRef.componentInstance.configUpdated.subscribe((config: Config) => {
+      this.analysisMode = config.analysisMode;
+      if (config.uiPopup && !this.notificationsChannelOpen) {
         this.notificationService.connectToNotificationsChannel();
         this.notificationsChannelOpen = true;
       }
-      if (!notificationsConfig.uiPopup && this.notificationsChannelOpen) {
+      if (!config.uiPopup && this.notificationsChannelOpen) {
         this.notificationService.disconnectNotificationChannel();
         this.notificationsChannelOpen = false;
       }
@@ -118,7 +125,7 @@ export class ControlsComponent implements OnChanges {
       this.isAnalysisOn = true;
       this.analysisOpText = "Stop";
       for (let [ID, config] of this.cameraConfigs) {
-        this.httpClient.post('http://mediamtx.hub.svc.cluster.local/analysis/'+ ID + '?analysisMode=' + config["analysisMode"], null)
+        this.httpClient.post('http://mediamtx.hub.svc.cluster.local/analysis/'+ ID + '?analysisMode=' + this.analysisMode, null)
           .subscribe({
             error: err => console.error('Could not start analysis for Camera ' + ID, err)
           });

@@ -1,84 +1,81 @@
-<div class="play-recording-button-container">
-  <button
-    mat-mini-fab
-    color="accent"
-    class="play-recording-button"
-    disabled="true"
-  >
-    <!-- maybe have a popup tooltip: "Recoding is currently unsupported" -->
-    <mat-icon>play_arrow</mat-icon>
-    <!-- OR -->
-    <!-- <mat-icon>play_circle_filled</mat-icon> -->
-  </button>
-  <!-- this will lead to a dialog with the current videos listed (with paging),
-     which will redirect to a new page /recordings with a single video output element with play, pause, forward, rewind and back buttons -->
-  <div class="playback-tooltip">View Playback</div>
-</div>
-
-<div class="notifications-button-container">
-  <button
-    mat-mini-fab
-    color="accent"
-    class="notifications-button"
-    (click)="openConfigNotificationsDialog()"
-  >
-    <mat-icon>notifications</mat-icon>
-  </button>
-  <!-- this will lead to a dialog with all the possible notification options (popup, webhook, email) -->
-  <div class="notifications-tooltip">Configure notifications</div>
-</div>
-
-<div class="analytics-button-container">
-  <button
-    mat-mini-fab
-    color="accent"
-    class="analytics-button"
-    (click)="toggleAnalysis()"
-  >
-    <mat-icon>analytics</mat-icon>
-  </button>
-  <!-- this will start analysis for all present cameras -->
-  <div class="analytics-tooltip">{{ analysisOpText }} analysis</div>
-  <!-- maybe have a dropdown/popup buttons to choose the analysis type? -->
-</div>
-
-<div class="recording-button-container">
-  <button
-    mat-mini-fab
-    color="accent"
-    class="recording-button"
-    disabled="true"
-  >
-    <mat-icon>fiber_smart_record</mat-icon>
-  </button>
-  <!-- this will lead to a dropdown? menu of current cameras -->
-  <div class="recording-tooltip">Start recording</div>
-</div>
-
-<div class="anonymyze-button-container">
-  <button
-    mat-mini-fab
-    color="accent"
-    class="anonymyze-button"
-    (click)="anonymyze()"
-  >
-    <mat-icon>not_interested</mat-icon>
-  </button>
-  <!-- this will destroy current players, and connect to the new /anon-{path} endpoints -->
-  <div class="anonymyze-tooltip">Anonymyze</div>
-</div>
-
-<div class="add-button-container">
-  <button
-    mat-fab
-    class="main-button"
-    (click)="openAddCameraDialog()"
-    [disabled]="cameraConfigs.size >= 4"
-  >
-    <mat-icon>add</mat-icon>
-  </button>
-
-  <div class="hover-tooltip">
-    Connect camera
+<div class="button-container">
+  <div class="analytics-button-container">
+    <!-- this will start analysis for all present cameras -->
+    <button
+      mat-mini-fab
+      color="accent"
+      class="analytics-button"
+      (click)="toggleAnalysis()"
+    >
+      <mat-icon>analytics</mat-icon>
+      <span class="analytics-tooltip tooltip tooltip-left">{{ analysisOpText }} analysis</span>
+    </button>
   </div>
+
+  <div class="play-recording-button-container">
+    <!-- this will lead to a dialog with the current videos listed (with paging),
+      which will redirect to a new page /recordings with a single video output element with play, pause, forward, rewind and back buttons -->
+    <button
+      mat-mini-fab
+      color="accent"
+      class="play-recording-button"
+      disabled="true"
+    >
+      <!-- maybe have a popup tooltip: "Recoding is currently unsupported" -->
+      <mat-icon>play_arrow</mat-icon>
+      <!-- OR -->
+      <!-- <mat-icon>play_circle_filled</mat-icon> -->
+      <span class="playback-tooltip tooltip tooltip-left">View Playback</span>
+    </button>
+  </div>
+
+  <div class="recording-button-container">
+    <!-- this will lead to a dropdown/dialog menu of current cameras -->
+    <button
+      mat-mini-fab
+      color="accent"
+      class="recording-button"
+      disabled="true"
+    >
+      <mat-icon>fiber_smart_record</mat-icon>
+      <span class="recording-tooltip tooltip tooltip-left">Start recording</span>
+    </button>
+  </div>
+
+  <div class="anonymyze-button-container">
+    <!-- this will destroy current players, and connect to the new /anon-{path} endpoints -->
+    <button
+      mat-mini-fab
+      color="accent"
+      class="anonymyze-button"
+      (click)="anonymyze()"
+    >
+      <mat-icon>not_interested</mat-icon>
+      <span class="anonymyze-tooltip tooltip tooltip-left">Anonymyze</span>
+    </button>
+  </div>
+
+  <div class="add-camera-button-container">
+    <button
+      mat-fab
+      class="add-camera-button"
+      (click)="openAddCameraDialog()"
+      [disabled]="cameraConfigs.size >= 4"
+    >
+      <mat-icon>add</mat-icon>
+      <span class="add-camera-tooltip tooltip tooltip-left">Connect camera</span>
+    </button>
+  </div>
+</div>
+
+<div class="config-button-container">
+  <button
+    mat-mini-fab
+    color="accent"
+    class="config-button"
+    (click)="openConfigDialog()"
+  >
+    <mat-icon>settings</mat-icon>
+    <span class="notifications-tooltip tooltip tooltip-right">Configure</span>
+  </button>
 </div>
