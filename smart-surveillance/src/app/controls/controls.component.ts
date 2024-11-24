@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-// import { trigger, state, style, transition, animate } from '@angular/animations';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { AddCameraDialogComponent } from '../add-camera-dialog/add-camera-dialog.component';
 import { ConfigDialogComponent } from '../config-dialog/config-dialog.component';
@@ -83,6 +82,7 @@ export class ControlsComponent implements OnChanges, OnInit {
   }
 
   openAddCameraDialog() {
+    // TODO: the dialog box is a bit small, figure out how to make it larger
     const dialogRef = this.dialog.open(AddCameraDialogComponent);
     dialogRef.componentInstance.submitCamera.subscribe((cameraConfig: CameraConfig) => {
       this.cameraAdded.emit(cameraConfig);
@@ -93,6 +93,7 @@ export class ControlsComponent implements OnChanges, OnInit {
             error: err => console.error('Could not start analysis for Camera ' + cameraConfig.ID, err)
           });
       }
+      this.dialog.closeAll();
     });
   }
 
@@ -108,6 +109,7 @@ export class ControlsComponent implements OnChanges, OnInit {
         this.notificationService.disconnectNotificationChannel();
         this.notificationsChannelOpen = false;
       }
+      this.dialog.closeAll();
     });
   }
 

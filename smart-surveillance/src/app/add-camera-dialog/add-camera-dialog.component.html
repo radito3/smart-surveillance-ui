@@ -1,1 +1,30 @@
-<p>add-camera-dialog works!</p>
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="form-container">
+    <mat-form-field appearance="fill">
+        <mat-label>Camera ID</mat-label>
+        <input matInput formControlName="cameraID" placeholder="Enter Camera ID" />
+        <mat-error *ngIf="form.get('cameraID')?.hasError('required')">Text is required.</mat-error>
+        <mat-error *ngIf="form.get('cameraID')?.hasError('minlength')">Minimum length is 1 character.</mat-error>
+        <mat-error *ngIf="form.get('cameraID')?.hasError('maxlength')">Maximum length is 64 characters.</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill">
+        <mat-label>Camera Source URL</mat-label>
+        <input matInput formControlName="cameraSource" placeholder="Enter a Camera Source URL" />
+        <mat-error *ngIf="form.get('cameraSource')?.hasError('required')">Camera Source is required.</mat-error>
+        <mat-error *ngIf="form.get('cameraSource')?.hasError('pattern')">Invalid URL format.</mat-error>
+    </mat-form-field>
+
+    <mat-slide-toggle formControlName="transcoding">Enable Transcoding</mat-slide-toggle>
+
+    <mat-slide-toggle formControlName="recording">Enable recording</mat-slide-toggle>
+
+    <mat-form-field appearance="fill">
+        <mat-label>Camera max readers</mat-label>
+        <input matInput type="number" formControlName="maxReaders" placeholder="Select max number of camera consumers (between 1 and 10)" value="3" />
+        <mat-error *ngIf="form.get('maxReaders')?.hasError('min')">Max readers must be at least 1.</mat-error>
+        <mat-error *ngIf="form.get('maxReaders')?.hasError('max')">Max readers cannot be more than 10.</mat-error>
+        <mat-error *ngIf="form.get('maxReaders')?.hasError('pattern')">Only numeric values are allowed.</mat-error>
+    </mat-form-field>
+
+    <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || form.pristine || submitClicked">Submit</button>
+</form>

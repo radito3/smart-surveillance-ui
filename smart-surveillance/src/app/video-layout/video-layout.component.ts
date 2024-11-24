@@ -13,6 +13,7 @@ import { MatIcon } from '@angular/material/icon';
 import JSMpeg from '@cycjimmy/jsmpeg-player';
 import * as dashjs from 'dashjs';
 import { Notification } from '../models/notification.model';
+import { CameraConfig } from '../models/camera-config.model';
 
 @Component({
   selector: 'app-video-layout',
@@ -22,12 +23,10 @@ import { Notification } from '../models/notification.model';
   styleUrl: './video-layout.component.css'
 })
 export class VideoLayoutComponent implements OnInit {
+
   cameraIDs: Array<string> = [];
-
   cameraPlayers: Array<JSMpeg.Player | Hls | dashjs.MediaPlayerClass | null> = [];
-
   canvasCloseButtons: Array<boolean> = (new Array(10)).fill(false);
-
   notification: string | null = null;
 
   private credsEncryptionKey: string = '';
@@ -46,10 +45,8 @@ export class VideoLayoutComponent implements OnInit {
       }
     });
 
-    // this.httpClient.get('/config/public_key.pem', { responseType: 'text' })
-    //   .subscribe(publicKey => {
-    //     this.credsEncryptionKey = publicKey;
-    // });
+    this.httpClient.get('/config/public_key.pem', { responseType: 'text' })
+      .subscribe(publicKey => this.credsEncryptionKey = publicKey);
   }
 
   private encryptCredentials(creds: string): string {
@@ -62,18 +59,17 @@ export class VideoLayoutComponent implements OnInit {
     return encryptedCreds;
   }
 
-  startStream(cameraConfig: any) {
-    const source: string = "";
-
-    if (source.startsWith("rtsp") || source.startsWith("rtmp")) {
-      // convert to ws endpoint
+  startStream(cameraConfig: CameraConfig) {
+    // FIXME: there is a TypeError where it doesn't find the method startsWith on a string???
+    if (cameraConfig.source.startsWith("rtsp") || cameraConfig.source.startsWith("rtmp")) {
       const canvas = this.document.getElementById('canvas' + this.cameraIDs.length) as HTMLCanvasElement;
-      this.cameraPlayers.push(this.playWsStream(canvas, source));
-    } else if (source.startsWith("http")) {
-      if (source.endsWith("m3u8")) {
-        this.cameraPlayers.push(this.playHlsStream(source));
+      const streamPath = cameraConfig.source.split('/').filter(Boolean).pop()!;
+      this.cameraPlayers.push(this.playWsStream(canvas, streamPath));
+    } else if (cameraConfig.source.startsWith("http")) {
+      if (cameraConfig.source.endsWith("m3u8")) {
+        this.cameraPlayers.push(this.playHlsStream(cameraConfig.source));
       } else {
-        this.cameraPlayers.push(this.playDashStream(source));
+        this.cameraPlayers.push(this.playDashStream(cameraConfig.source));
       }
     } else {
       this.notification = "Unsupported stream format";
@@ -102,7 +98,7 @@ export class VideoLayoutComponent implements OnInit {
   }
 
   private playWsStream(canvas: HTMLCanvasElement, path: string): JSMpeg.Player {
-    return new JSMpeg.Player('ws://localhost:8080/ws/' + path, {
+    return new JSMpeg.Player('ws://mediamtx.hub.svc.cluster.local:8080/ws/' + path, {
       audio: false,
       canvas: canvas,
       disableGl: true,
@@ -126,7 +122,7 @@ export class VideoLayoutComponent implements OnInit {
   private playHlsStream(streamURL: string): Hls | null {
     const parent = this.getCurrentPlaybackParentElement();
     if (parent === null) {
-      // append to cameras array and trigger a change detection, so that Angular can re-render the DOM tree
+      // append to cameras array
     }
     const videoElement = this.createVideoElement(parent!);
 
@@ -148,7 +144,6 @@ export class VideoLayoutComponent implements OnInit {
 
   stopStream(cameraID: string) {
     const index = this.cameraIDs.indexOf(cameraID);
-
     const player = this.cameraPlayers[index];
 
     if (player === null) {
@@ -163,6 +158,7 @@ export class VideoLayoutComponent implements OnInit {
     // if (player instanceof dashjs.MediaPlayerClass) {
     //   player.destroy();
     // }
+
     this.cameraPlayers.splice(index, 1);
     this.cameraIDs.splice(index, 1);
   }

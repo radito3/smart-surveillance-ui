@@ -17,7 +17,7 @@ export class ConfigDialogComponent {
 
   submit() {
     // POST notification-service/configs {camera_id: str, [{ui_popup?: bool, webhook_url?: str, smtp...}]}
-    this.configUpdated.emit(new Config(AnalysisMode.Activity, true, '', ''))
+    this.configUpdated.emit(new Config())
   }
 
 }

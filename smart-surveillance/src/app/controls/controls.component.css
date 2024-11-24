@@ -8,7 +8,7 @@
   background-color: #1c7fe9;
 }
 
-.button-container {
+.right-buttons-container {
   /* position: relative; */
   position: fixed; /* Keeps the container in a fixed position relative to the viewport */
   bottom: 2rem;    /* Distance from the bottom of the screen */
@@ -19,9 +19,9 @@
 }
 
 .config-button-container {
-  position: fixed;    /* Fixed position relative to the viewport */
-  bottom: 2rem;       /* Distance from the bottom of the screen */
-  left: 2rem;         /* Distance from the left side of the screen */
+  position: fixed; /* Fixed position relative to the viewport */
+  bottom: 2rem;    /* Distance from the bottom of the screen */
+  left: 2rem;      /* Distance from the left side of the screen */
 }
 
 /* Common tooltip styling */
@@ -44,8 +44,8 @@
 
 /* Tooltip for right-aligned buttons */
 .tooltip-left {
-  right: 100%;          /* Position the tooltip to the left of the button */
-  bottom: -1.05rem;        /* Center vertically relative to the button */
+  right: 100%;        /* Position the tooltip to the left of the button */
+  bottom: -1.05rem;   /* Center vertically relative to the button */
   margin-right: 2rem; /* Space between the button and tooltip */
 }
 
