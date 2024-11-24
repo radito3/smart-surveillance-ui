@@ -33,12 +33,12 @@
     mat-mini-fab
     color="accent"
     class="analytics-button"
-    (click)="startAnalysis()"
+    (click)="toggleAnalysis()"
   >
     <mat-icon>analytics</mat-icon>
   </button>
   <!-- this will start analysis for all present cameras -->
-  <div class="analytics-tooltip">Start analysis</div>
+  <div class="analytics-tooltip">{{ analysisOpText }} analysis</div>
   <!-- maybe have a dropdown/popup buttons to choose the analysis type? -->
 </div>
 

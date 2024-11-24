@@ -24,13 +24,16 @@ export class ControlsComponent implements OnChanges {
 
   @Output() cameraAdded: EventEmitter<any> = new EventEmitter();
 
+  analysisOpText: string = "Start";
+
   cameraConfigs: Map<string, any> = new Map();
-  private cameraIDs$ = new BehaviorSubject<string>('');
+  private removedCameraIDs$ = new BehaviorSubject<string>('');
   private notificationsChannelOpen: boolean = false;
+  private isAnalysisOn: boolean = false;
 
   constructor(private dialog: MatDialog, private httpClient: HttpClient,
               private notificationService: NotificationService) {
-    this.cameraIDs$.pipe(
+    this.removedCameraIDs$.pipe(
         filter(value => value.length > 0),
         switchMap((ID: string) =>
           this.httpClient.delete("http://mediamtx.hub.svc.cluster.local/analysis/" + ID).pipe(
@@ -69,7 +72,7 @@ export class ControlsComponent implements OnChanges {
         }
       }
 
-      IDsNotPresent.forEach(this.cameraIDs$.next);
+      IDsNotPresent.forEach(this.removedCameraIDs$.next);
     }
   }
 
@@ -78,6 +81,12 @@ export class ControlsComponent implements OnChanges {
     dialogRef.componentInstance.submitCamera.subscribe((cameraConfig: any) => {
       this.cameraAdded.emit(cameraConfig);
       this.cameraConfigs.set("<ID>", cameraConfig);
+      if (this.isAnalysisOn) {
+        this.httpClient.post('http://mediamtx.hub.svc.cluster.local/analysis/'+ ID + '?analysisMode=' + cameraConfig["analysisMode"], null)
+          .subscribe({
+            error: err => console.error('Could not start analysis for Camera ' + ID, err)
+          });
+      }
     });
   }
 
@@ -95,15 +104,34 @@ export class ControlsComponent implements OnChanges {
     });
   }
 
-  startAnalysis() {
-    for (let [ID, config] of this.cameraConfigs) {
-      this.httpClient.post('http://mediamtx.hub.svc.cluster.local/analysis/'+ ID + '?analysisMode=' + config["analysisMode"], null); 
+  toggleAnalysis() {
+    if (this.isAnalysisOn) {
+      this.isAnalysisOn = false;
+      this.analysisOpText = "Start";
+      for (let ID of this.cameraConfigs.keys()) {
+        this.httpClient.delete('http://mediamtx.hub.svc.cluster.local/analysis/'+ ID)
+          .subscribe({
+            error: err => console.error('Could not stop analysis for Camera ' + ID, err)
+          });
+      }
+    } else {
+      this.isAnalysisOn = true;
+      this.analysisOpText = "Stop";
+      for (let [ID, config] of this.cameraConfigs) {
+        this.httpClient.post('http://mediamtx.hub.svc.cluster.local/analysis/'+ ID + '?analysisMode=' + config["analysisMode"], null)
+          .subscribe({
+            error: err => console.error('Could not start analysis for Camera ' + ID, err)
+          });
+      }
     }
   }
 
   anonymyze() {
     for (let ID of this.cameraConfigs.keys()) {
-      this.httpClient.post('http://mediamtx.hub.svc.cluster.local/anonymyze/camera-' + ID, null);
+      this.httpClient.post('http://mediamtx.hub.svc.cluster.local/anonymyze/camera-' + ID, null)
+        .subscribe({
+          error: err => console.error('Could not anonymyze Stream ' + ID, err)
+        });
       // recreate the players with a anon- prefixed path
     }
     // what about turning it off?
