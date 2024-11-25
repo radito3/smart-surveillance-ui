@@ -3,8 +3,6 @@ import { NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
 import { DOCUMENT } from '@angular/common';
 import { ControlsComponent } from "../controls/controls.component";
 import { NotificationService } from '../services/notification.service';
-import { HttpClient } from '@angular/common/http';
-import * as Forge from 'node-forge';
 import Hls from 'hls.js';
 import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
@@ -14,7 +12,6 @@ import JSMpeg from '@cycjimmy/jsmpeg-player';
 import * as dashjs from 'dashjs';
 import { Notification } from '../models/notification.model';
 import { CameraConfig } from '../models/camera-config.model';
-import { retry, timeout } from 'rxjs';
 
 @Component({
   selector: 'app-video-layout',
@@ -30,11 +27,8 @@ export class VideoLayoutComponent implements OnInit {
   canvasCloseButtons: Array<boolean> = (new Array(10)).fill(false);
   notification: string | null = null;
 
-  private credsEncryptionKey: string = '';
-
   constructor(private notificationService: NotificationService,
-     private httpClient: HttpClient,
-     @Inject(DOCUMENT) private document: Document) {}
+              @Inject(DOCUMENT) private document: Document) {}
 
   ngOnInit(): void {
     // TODO: perform a GET /endpoints to check any existing cameras, in case the UI pod has been restarted
@@ -45,23 +39,6 @@ export class VideoLayoutComponent implements OnInit {
         setTimeout(() => this.notification = null, 10000); // auto-hide after 10 seconds
       }
     });
-
-    this.httpClient.get('/config/public_key.pem', { responseType: 'text' })
-      .pipe(timeout(2000), retry(3))
-      .subscribe({
-        next: publicKey => this.credsEncryptionKey = publicKey,
-        error: err => console.error('Could not fetch credentials public key:', err)
-      });
-  }
-
-  private encryptCredentials(creds: string): string {
-    // openssl genpkey -algorithm RSA -out private_key.pem -pkeyopt rsa_keygen_bits:4096
-    // openssl rsa -pubout -in private_key.pem -out public_key.pem
-
-    const pubKey = Forge.pki.publicKeyFromPem(this.credsEncryptionKey);
-
-    const encryptedCreds = pubKey.encrypt(creds);
-    return encryptedCreds;
   }
 
   startStream(cameraConfig: CameraConfig) {
