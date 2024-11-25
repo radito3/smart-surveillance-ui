@@ -29,7 +29,7 @@ export class AddCameraDialogComponent {
       cameraSource: ['', [Validators.required, Validators.pattern('(rtsp|rtmp|http)://.+')]],
       transcoding: [false],
       recording: [false],
-      maxReaders: [3, [Validators.min(1), Validators.max(10), Validators.pattern('^[0-9]+$')]],
+      maxReaders: [3, [Validators.min(2), Validators.max(10), Validators.pattern('^[0-9]+$')]],
     });
   }
 

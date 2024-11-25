@@ -83,7 +83,7 @@ export class ControlsComponent implements OnChanges, OnInit {
 
   openAddCameraDialog() {
     // TODO: the dialog box is a bit small, figure out how to make it larger
-    const dialogRef = this.dialog.open(AddCameraDialogComponent);
+    const dialogRef = this.dialog.open(AddCameraDialogComponent, {height: '37rem', width: '37rem'});
     dialogRef.componentInstance.submitCamera.subscribe((cameraConfig: CameraConfig) => {
       this.cameraAdded.emit(cameraConfig);
       this.cameraConfigs.set(cameraConfig.ID, cameraConfig);
