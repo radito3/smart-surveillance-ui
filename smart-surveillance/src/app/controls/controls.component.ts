@@ -64,7 +64,14 @@ export class ControlsComponent implements OnChanges, OnInit {
   }
 
   ngOnInit(): void {
-    // POST notification-service/configs with default config
+    this.httpClient.post('http://notification-service.hub.svc.cluster.local/config', new Config())
+      .subscribe({
+        next: _ => {
+          this.notificationService.connectToNotificationsChannel();
+          this.notificationsChannelOpen = true;
+        },
+        error: err => console.error('Could not send config request', err)
+      });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -82,7 +89,6 @@ export class ControlsComponent implements OnChanges, OnInit {
   }
 
   openAddCameraDialog() {
-    // TODO: the dialog box is a bit small, figure out how to make it larger
     const dialogRef = this.dialog.open(AddCameraDialogComponent, {height: '37rem', width: '37rem'});
     dialogRef.componentInstance.submitCamera.subscribe((cameraConfig: CameraConfig) => {
       this.cameraAdded.emit(cameraConfig);
@@ -98,9 +104,10 @@ export class ControlsComponent implements OnChanges, OnInit {
   }
 
   openConfigDialog() {
-    const dialogRef = this.dialog.open(ConfigDialogComponent);
+    const dialogRef = this.dialog.open(ConfigDialogComponent, {height: '40rem', width: '37rem'});
     dialogRef.componentInstance.configUpdated.subscribe((config: Config) => {
       this.analysisMode = config.analysisMode;
+      this.dialog.closeAll();
       if (config.uiPopup && !this.notificationsChannelOpen) {
         this.notificationService.connectToNotificationsChannel();
         this.notificationsChannelOpen = true;
@@ -109,7 +116,6 @@ export class ControlsComponent implements OnChanges, OnInit {
         this.notificationService.disconnectNotificationChannel();
         this.notificationsChannelOpen = false;
       }
-      this.dialog.closeAll();
     });
   }
 

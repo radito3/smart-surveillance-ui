@@ -1,12 +1,12 @@
 export enum AnalysisMode {
-    Presence,
-    Behaviour,
-    Activity
+    Presence = 'Presence',
+    Behaviour = 'Behaviour',
+    Activity = 'Activity'
 }
 
 export enum WebhookAuthType {
-    Basic,
-    BearerToken
+    Basic = 'Basic',
+    BearerToken = 'BearerToken'
 }
 
 export class Config {

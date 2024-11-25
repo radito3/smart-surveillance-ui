@@ -1,1 +1,71 @@
-<p>config-dialog works!</p>
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="form-container">
+    <mat-form-field appearance="fill" class="full-width">
+        <mat-label>Analysis Mode</mat-label>
+        <mat-select formControlName="analysisMode">
+            <mat-option *ngFor="let key of analysisTypeKeys" [value]="analysisTypes[key]">
+              {{ analysisTypes[key] }}
+            </mat-option>
+        </mat-select>
+    </mat-form-field>
+
+    <mat-slide-toggle formControlName="uiPopup">Enable UI alert popup</mat-slide-toggle>
+
+    <mat-form-field appearance="fill" class="full-width">
+        <mat-label>Webhook URL</mat-label>
+        <input matInput formControlName="webhookURL" placeholder="Enter Webhook URL" />
+        <mat-error *ngIf="form.get('webhookURL')?.hasError('pattern')">Invalid URL format.</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" class="full-width">
+        <mat-label>Webhook Request Timeout</mat-label>
+        <input matInput type="number" formControlName="webhookTimeout" placeholder="Enter a request timeout in seconds" />
+        <mat-error *ngIf="form.get('webhookTimeout')?.hasError('min')">Timeout can not be less than 1 second.</mat-error>
+        <mat-error *ngIf="form.get('webhookTimeout')?.hasError('max')">Timeout can not be more than 300 seconds (5 minutes).</mat-error>
+        <mat-error *ngIf="form.get('webhookTimeout')?.hasError('pattern')">Only positive numeric values are allowed.</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" class="full-width">
+        <mat-label>Webhook Authentication Type</mat-label>
+        <mat-select formControlName="webhookAuthType">
+            <mat-option *ngFor="let key of webhookAuthTypeKeys" [value]="webhookAuthTypes[key]">
+              {{ webhookAuthTypes[key] }}
+            </mat-option>
+        </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" class="full-width">
+        <mat-label>Webhook Credentials</mat-label>
+        <input matInput type="password" formControlName="webhookCreds" />
+    </mat-form-field>
+
+    <!-- TODO: improve message -->
+    <mat-error *ngIf="form.hasError('invalidCreds')">Invalid webhook creds placeholder error message.</mat-error>
+
+    <mat-form-field appearance="fill" class="full-width">
+        <mat-label>SMTP Server URL</mat-label>
+        <input matInput formControlName="smtpServer" placeholder="Enter SMTP Server URL" />
+        <mat-error *ngIf="form.get('webhookURL')?.hasError('pattern')">Invalid URL format.</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" class="full-width">
+        <mat-label>Mail sender</mat-label>
+        <input matInput formControlName="smtpSender" placeholder="Enter e-mail sender address" />
+        <mat-error *ngIf="form.get('smtpSender')?.hasError('email')">Invalid e-mail format.</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" class="full-width">
+        <mat-label>Mail recipient</mat-label>
+        <input matInput formControlName="smtpRecipient" placeholder="Enter e-mail recipient address" />
+        <mat-error *ngIf="form.get('smtpRecipient')?.hasError('email')">Invalid e-mail format.</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" class="full-width">
+        <mat-label>SMTP Credentials</mat-label>
+        <input matInput type="password" formControlName="smtpCreds" />
+    </mat-form-field>
+
+    <!-- TODO: improve message -->
+    <mat-error *ngIf="form.hasError('incompleteCreds')">E-mail credentials are missing.</mat-error>
+
+    <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || submitClicked">Save</button>
+</form>

@@ -35,9 +35,10 @@ export class AddCameraDialogComponent {
 
   onSubmit() {
     this.submitClicked = true;
-    this.httpClient.post('http://mediamtx.hub.svc.cluster.local/endpoints', this.form.value)
+    const payload = {...this.form.value} as CameraConfig;
+    this.httpClient.post('http://mediamtx.hub.svc.cluster.local/endpoints', payload)
       .subscribe({
-        next: _ => this.submitCamera.emit({...this.form.value} as CameraConfig),
+        next: _ => this.submitCamera.emit(payload),
         error: err => console.error('Could not create camera', err)
       });
   }
