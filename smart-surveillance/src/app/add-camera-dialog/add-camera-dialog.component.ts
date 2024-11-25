@@ -7,6 +7,7 @@ import { MatSlideToggle } from '@angular/material/slide-toggle';
 import { MatInput } from '@angular/material/input';
 import { NgIf } from '@angular/common';
 import { MatButton } from '@angular/material/button';
+import { timeout } from 'rxjs';
 
 @Component({
   selector: 'app-add-camera-dialog',
@@ -37,10 +38,11 @@ export class AddCameraDialogComponent {
     this.submitClicked = true;
     const payload = {...this.form.value} as CameraConfig;
     this.httpClient.post('http://mediamtx.hub.svc.cluster.local/endpoints', payload)
+      .pipe(timeout(5000))
       .subscribe({
         next: _ => this.submitCamera.emit(payload),
         error: err => {
-          console.error('Could not create camera', err);
+          console.error('Could not create camera:', err);
           this.submitClicked = false;
         }
       });

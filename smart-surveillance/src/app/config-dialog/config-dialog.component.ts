@@ -8,6 +8,7 @@ import { MatFormField, MatLabel, MatError } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
 import { MatOption, MatSelect } from '@angular/material/select';
+import { timeout } from 'rxjs';
 
 @Component({
   selector: 'app-config-dialog',
@@ -25,6 +26,7 @@ export class ConfigDialogComponent {
   analysisTypeKeys = Object.values(AnalysisMode);
   webhookAuthTypes = WebhookAuthType;
   webhookAuthTypeKeys = Object.values(WebhookAuthType);
+
   form: FormGroup;
   submitClicked: boolean;
 
@@ -77,10 +79,11 @@ export class ConfigDialogComponent {
     this.submitClicked = true;
     const payload = {...this.form.value} as Config;
     this.httpClient.post('http://notification-service.hub.svc.cluster.local/config', payload)
+      .pipe(timeout(5000))
       .subscribe({
         next: _ => this.configUpdated.emit(payload),
         error: err => {
-          console.error('Could not send config request', err);
+          console.error('Could not send config request:', err);
           this.submitClicked = false;
         }
       });

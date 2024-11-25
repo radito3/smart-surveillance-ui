@@ -14,6 +14,7 @@ import JSMpeg from '@cycjimmy/jsmpeg-player';
 import * as dashjs from 'dashjs';
 import { Notification } from '../models/notification.model';
 import { CameraConfig } from '../models/camera-config.model';
+import { retry, timeout } from 'rxjs';
 
 @Component({
   selector: 'app-video-layout',
@@ -46,7 +47,11 @@ export class VideoLayoutComponent implements OnInit {
     });
 
     this.httpClient.get('/config/public_key.pem', { responseType: 'text' })
-      .subscribe(publicKey => this.credsEncryptionKey = publicKey);
+      .pipe(timeout(2000), retry(3))
+      .subscribe({
+        next: publicKey => this.credsEncryptionKey = publicKey,
+        error: err => console.error('Could not fetch credentials public key:', err)
+      });
   }
 
   private encryptCredentials(creds: string): string {

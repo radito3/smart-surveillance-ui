@@ -4,10 +4,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { AddCameraDialogComponent } from '../add-camera-dialog/add-camera-dialog.component';
 import { ConfigDialogComponent } from '../config-dialog/config-dialog.component';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { AnalysisMode, Config } from '../models/config.model';
 import { NotificationService } from '../services/notification.service';
-import { BehaviorSubject, catchError, filter, map, of, retry, switchMap } from 'rxjs';
+import { BehaviorSubject, catchError, filter, map, of, retry, switchMap, throwError, timeout } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CameraConfig } from '../models/camera-config.model';
 
@@ -38,39 +38,42 @@ export class ControlsComponent implements OnChanges, OnInit {
         filter(value => value.length > 0),
         switchMap((ID: string) =>
           this.httpClient.delete("http://mediamtx.hub.svc.cluster.local/analysis/" + ID).pipe(
-            catchError(err => {
-              console.error('Stop analysis request failed', err);
-              return of(null); // Handle error gracefully
-            }),
+            timeout(5000),
             retry(3),
+            catchError(err => {
+              console.error('Stop analysis request failed:', err);
+              return throwError(() => err);
+            }),
             map(_ => ID)
           )
         ),
         switchMap((ID: string) =>
           this.httpClient.delete("http://mediamtx.hub.svc.cluster.local/endpoints/" + ID).pipe(
-            catchError(err => {
-              console.error('Delete endpoint request failed', err);
-              return of(null); // Handle error gracefully
-            }),
+            timeout(5000),
             retry(3),
+            catchError(err => {
+              console.error('Delete endpoint request failed:', err);
+              return throwError(() => err);
+            }),
             map(_ => ID)
           )
         ),
         takeUntilDestroyed()
       ).subscribe({
         next: (ID: string) => this.cameraConfigs.delete(ID),
-        error: (err) => console.error('Error deleting camera', err)
+        error: (err) => console.error('Error removing camera:', err)
       });
   }
 
   ngOnInit(): void {
     this.httpClient.post('http://notification-service.hub.svc.cluster.local/config', new Config())
+      .pipe(timeout(5000))
       .subscribe({
         next: _ => {
           this.notificationService.connectToNotificationsChannel();
           this.notificationsChannelOpen = true;
         },
-        error: err => console.error('Could not send config request', err)
+        error: err => console.error('Could not send config request:', err)
       });
   }
 
@@ -94,7 +97,8 @@ export class ControlsComponent implements OnChanges, OnInit {
       this.cameraAdded.emit(cameraConfig);
       this.cameraConfigs.set(cameraConfig.ID, cameraConfig);
       if (this.isAnalysisOn) {
-        this.httpClient.post('http://mediamtx.hub.svc.cluster.local/analysis/'+ cameraConfig.ID + '?analysisMode=' + this.analysisMode, null)
+        this.httpClient.post('http://mediamtx.hub.svc.cluster.local/analysis/' + cameraConfig.ID + '?analysisMode=' + this.analysisMode, null)
+          .pipe(timeout(5000))
           .subscribe({
             error: err => console.error('Could not start analysis for Camera ' + cameraConfig.ID, err)
           });
@@ -125,6 +129,7 @@ export class ControlsComponent implements OnChanges, OnInit {
       this.analysisOpText = "Start";
       for (let ID of this.cameraConfigs.keys()) {
         this.httpClient.delete('http://mediamtx.hub.svc.cluster.local/analysis/'+ ID)
+          .pipe(timeout(5000), retry(3))
           .subscribe({
             error: err => console.error('Could not stop analysis for Camera ' + ID, err)
           });
@@ -134,6 +139,7 @@ export class ControlsComponent implements OnChanges, OnInit {
       this.analysisOpText = "Stop";
       for (let [ID, config] of this.cameraConfigs) {
         this.httpClient.post('http://mediamtx.hub.svc.cluster.local/analysis/'+ ID + '?analysisMode=' + this.analysisMode, null)
+          .pipe(timeout(5000))
           .subscribe({
             error: err => console.error('Could not start analysis for Camera ' + ID, err)
           });
@@ -144,10 +150,11 @@ export class ControlsComponent implements OnChanges, OnInit {
   anonymyze() {
     for (let ID of this.cameraConfigs.keys()) {
       this.httpClient.post('http://mediamtx.hub.svc.cluster.local/anonymyze/camera-' + ID, null)
+        .pipe(timeout(5000))
         .subscribe({
           error: err => console.error('Could not anonymyze Stream ' + ID, err)
         });
-      // recreate the players with a anon- prefixed path
+      // TODO: recreate the players with a anon- prefixed path
     }
     // what about turning it off?
   }
