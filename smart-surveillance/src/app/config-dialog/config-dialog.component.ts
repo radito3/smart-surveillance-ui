@@ -44,8 +44,7 @@ export class ConfigDialogComponent {
       smtpRecipient: ['', Validators.email],
       smtpCreds: ['']
     }, {
-      validators: [this.webhookCredentialsValidator, this.smtpCredentialsValidator],
-      updateOn: 'change'
+      validators: [this.webhookCredentialsValidator, this.smtpCredentialsValidator]
     })
   }
 
@@ -53,26 +52,41 @@ export class ConfigDialogComponent {
     const type = group.get('webhookAuthType')?.value;
     const creds = group.get('webhookCreds')?.value;
 
-    if (creds && !type) {
-      return { invalidCreds: true }; // custom error key
-    }
-    if (type && !creds) {
+    const numEmpty = [!type, !creds]
+      .map((condition: boolean) => condition ? 1 : 0)
+      .reduce((total: number, current: number) => total + current, 0);
+
+    if (numEmpty == 1) {
       return { invalidCreds: true };
     }
     return null;
   }
 
   smtpCredentialsValidator(group: AbstractControl): ValidationErrors | null {
-    const sender = group.get('smtpSender')?.value
+    const server = group.get('smtpServer')?.value;
+    const sender = group.get('smtpSender')?.value;
+    const recipient = group.get('smtpRecipient')?.value;
     const creds = group.get('smtpCreds')?.value;
 
-    if (!sender && !creds) {
+    const allEmpty = [
+      !server, !sender, !recipient, !creds
+    ].every(Boolean);
+
+    if (allEmpty) {
       return null;
     }
-    if (sender && group.get('smtpSender')?.valid && creds) {
-      return null;
+
+    const allPresentAndValid = [
+      server,
+      sender, group.get('smtpSender')?.valid,
+      recipient, group.get('smtpRecipient')?.valid,
+      creds
+    ].every(Boolean);
+
+    if (!allPresentAndValid) {
+      return { incompleteCreds: true };
     }
-    return { incompleteCreds: true };
+    return null;
   }
 
   onSubmit() {

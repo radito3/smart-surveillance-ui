@@ -38,24 +38,23 @@
         <input matInput type="password" formControlName="webhookCreds" />
     </mat-form-field>
 
-    <!-- TODO: improve message -->
-    <mat-error *ngIf="form.hasError('invalidCreds')">Invalid webhook creds placeholder error message.</mat-error>
+    <mat-error *ngIf="form.hasError('invalidCreds')">Both webhook authentication type and credentials are required.</mat-error>
 
     <mat-form-field appearance="fill" class="full-width">
         <mat-label>SMTP Server URL</mat-label>
         <input matInput formControlName="smtpServer" placeholder="Enter SMTP Server URL" />
-        <mat-error *ngIf="form.get('webhookURL')?.hasError('pattern')">Invalid URL format.</mat-error>
+        <mat-error *ngIf="form.get('smtpServer')?.hasError('pattern')">Invalid URL format.</mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="fill" class="full-width">
         <mat-label>Mail sender</mat-label>
-        <input matInput formControlName="smtpSender" placeholder="Enter e-mail sender address" />
+        <input matInput formControlName="smtpSender" placeholder="Enter sender e-mail address" />
         <mat-error *ngIf="form.get('smtpSender')?.hasError('email')">Invalid e-mail format.</mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="fill" class="full-width">
         <mat-label>Mail recipient</mat-label>
-        <input matInput formControlName="smtpRecipient" placeholder="Enter e-mail recipient address" />
+        <input matInput formControlName="smtpRecipient" placeholder="Enter recipient e-mail address" />
         <mat-error *ngIf="form.get('smtpRecipient')?.hasError('email')">Invalid e-mail format.</mat-error>
     </mat-form-field>
 
@@ -64,7 +63,6 @@
         <input matInput type="password" formControlName="smtpCreds" />
     </mat-form-field>
 
-    <!-- TODO: improve message -->
     <mat-error *ngIf="form.hasError('incompleteCreds')">E-mail credentials are missing.</mat-error>
 
     <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || submitClicked">Save</button>
