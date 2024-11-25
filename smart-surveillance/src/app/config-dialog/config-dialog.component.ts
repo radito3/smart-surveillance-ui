@@ -79,7 +79,10 @@ export class ConfigDialogComponent {
     this.httpClient.post('http://notification-service.hub.svc.cluster.local/config', payload)
       .subscribe({
         next: _ => this.configUpdated.emit(payload),
-        error: err => console.error('Could not send config request', err)
+        error: err => {
+          console.error('Could not send config request', err);
+          this.submitClicked = false;
+        }
       });
   }
 
