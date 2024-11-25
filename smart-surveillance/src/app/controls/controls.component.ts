@@ -105,6 +105,8 @@ export class ControlsComponent implements OnChanges, OnInit {
     dialogRef.componentInstance.submitCamera.subscribe((cameraConfig: CameraConfig) => {
       this.cameraAdded.emit(cameraConfig);
       this.cameraConfigs.set(cameraConfig.ID, cameraConfig);
+      this.dialog.closeAll();
+
       if (this.isAnalysisOn) {
         this.httpClient.post('http://mediamtx.hub.svc.cluster.local/analysis/' + cameraConfig.ID + '?analysisMode=' + this.analysisMode, null)
           .pipe(timeout(5000))
@@ -112,7 +114,6 @@ export class ControlsComponent implements OnChanges, OnInit {
             error: err => console.error('Could not start analysis for Camera ' + cameraConfig.ID, err)
           });
       }
-      this.dialog.closeAll();
     });
   }
 
@@ -121,6 +122,7 @@ export class ControlsComponent implements OnChanges, OnInit {
     dialogRef.componentInstance.configUpdated.subscribe((config: Config) => {
       this.analysisMode = config.analysisMode;
       this.dialog.closeAll();
+
       if (config.uiPopup && !this.notificationsChannelOpen) {
         this.notificationService.connectToNotificationsChannel();
         this.notificationsChannelOpen = true;
@@ -136,6 +138,7 @@ export class ControlsComponent implements OnChanges, OnInit {
     if (this.isAnalysisOn) {
       this.isAnalysisOn = false;
       this.analysisOpText = "Start";
+
       for (let ID of this.cameraConfigs.keys()) {
         this.httpClient.delete('http://mediamtx.hub.svc.cluster.local/analysis/'+ ID)
           .pipe(timeout(5000), retry(3))
@@ -146,6 +149,7 @@ export class ControlsComponent implements OnChanges, OnInit {
     } else {
       this.isAnalysisOn = true;
       this.analysisOpText = "Stop";
+
       for (let ID of this.cameraConfigs.keys()) {
         this.httpClient.post('http://mediamtx.hub.svc.cluster.local/analysis/'+ ID + '?analysisMode=' + this.analysisMode, null)
           .pipe(timeout(5000))

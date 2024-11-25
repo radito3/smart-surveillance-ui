@@ -1,89 +1,93 @@
 .video-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    width: 100vw;
-    position: relative;
-  }
-  
-  /* No Cameras */
-  .no-cameras {
-    text-align: center;
-    font-size: 24px;
-  }
-  
-  /* Action button for all cases */
-  .action-btn {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    padding: 10px 20px;
-    font-size: 16px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  
-  /* Single Camera - Takes 80% of the screen */
-  .single-camera video {
-    width: 80%;
-    height: auto;
-  }
-  
-  /* Two Cameras - 45% width each, side by side */
-  .two-cameras {
-    display: flex;
-    justify-content: space-around;
-    width: 100%;
-    height: 80%;
-  }
-  .two-cameras video {
-    width: 45%;
-    height: auto;
-  }
-  
-  /* Three Cameras - Two on top, one below */
-  .three-cameras {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-around;
-    width: 100%;
-    height: 80%;
-  }
-  .three-cameras video {
-    width: 45%;
-    height: auto;
-  }
-  .three-cameras video:nth-child(3) {
-    width: 90%;
-    margin-top: 10px;
-  }
-  
-  /* Four Cameras - 2x2 Grid */
-  .four-cameras {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    gap: 10px;
-    width: 100%;
-    height: 80%;
-  }
-  .four-cameras video {
-    width: 100%;
-    height: auto;
-  }
-  
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100vw;
+  position: relative;
+}
 
-/* ---- */
+/* No Cameras */
+.no-cameras {
+  text-align: center;
+  font-size: 24px;
+}
+
+/* Action button for all cases */
+.action-btn {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* Single Camera - Takes 80% of the screen */
+.single-camera canvas {
+  width: 80%;
+  height: 80%;
+
+  /* FIXME: this is sort of in the middle, vertically, but it is glued to the left side of the screen */
+  display: flex;
+  justify-content: center;
+  align-content: center;
+}
+
+/* Two Cameras - 45% width each, side by side */
+.two-cameras {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  height: 80%;
+}
+.two-cameras canvas {
+  width: 45%;
+  height: auto;
+}
+
+/* Three Cameras - Two on top, one below */
+.three-cameras {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  width: 100%;
+  height: 80%;
+}
+.three-cameras canvas {
+  width: 45%;
+  height: auto;
+}
+.three-cameras canvas:nth-child(3) {
+  width: 90%;
+  margin-top: 10px;
+}
+
+/* Four Cameras - 2x2 Grid */
+.four-cameras {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+  height: 80%;
+}
+.four-cameras canvas {
+  width: 100%;
+  height: auto;
+}
+
+/* TODO: this isn't quite on top of the canvas, but that might not be the button's fault... */
 .close-button {
   position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 1;
-  background-color: white; /* Optional for contrast */
+  top: 10rem;
+  right: 10rem;
+  /* z-index: 1; */
+  background-color: white;
   border-radius: 50%;
 }

@@ -102,6 +102,7 @@ export class ConfigDialogComponent {
 
   onSubmit() {
     this.submitClicked = true;
+    // FIXME: this won't work - do the same as in AddCameraDialog
     const payload = {...this.form.value} as Config;
     if (payload.webhookCredentials) {
       payload.webhookCredentials = this.encryptCredentials(payload.webhookCredentials);

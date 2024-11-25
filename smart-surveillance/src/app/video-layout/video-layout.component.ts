@@ -1,4 +1,4 @@
-import { Component, OnInit, Inject } from '@angular/core';
+import { Component, OnInit, Inject, ChangeDetectorRef, ViewChildren, QueryList } from '@angular/core';
 import { NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
 import { DOCUMENT } from '@angular/common';
 import { ControlsComponent } from "../controls/controls.component";
@@ -6,28 +6,31 @@ import { NotificationService } from '../services/notification.service';
 import Hls from 'hls.js';
 import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
-// import { loadPlayer, Player } from 'rtsp-relay/browser';
 // @ts-ignore
 import JSMpeg from '@cycjimmy/jsmpeg-player';
 import * as dashjs from 'dashjs';
 import { Notification } from '../models/notification.model';
 import { CameraConfig } from '../models/camera-config.model';
+import { AfterRenderDirective } from './after-render.directive';
 
 @Component({
   selector: 'app-video-layout',
   standalone: true,
-  imports: [NgSwitch, NgSwitchCase, NgSwitchDefault, NgIf, MatButton, MatIcon, ControlsComponent],
+  imports: [NgSwitch, NgSwitchCase, NgSwitchDefault, NgIf, MatButton, MatIcon, ControlsComponent, AfterRenderDirective],
   templateUrl: './video-layout.component.html',
   styleUrl: './video-layout.component.css'
 })
 export class VideoLayoutComponent implements OnInit {
 
+  @ViewChildren(AfterRenderDirective) canvases?: QueryList<AfterRenderDirective>;
+  
   cameraIDs: Array<string> = [];
   cameraPlayers: Array<JSMpeg.Player | Hls | dashjs.MediaPlayerClass | null> = [];
   canvasCloseButtons: Array<boolean> = (new Array(10)).fill(false);
   notification: string | null = null;
 
   constructor(private notificationService: NotificationService,
+              private cdr: ChangeDetectorRef,
               @Inject(DOCUMENT) private document: Document) {}
 
   ngOnInit(): void {
@@ -41,17 +44,23 @@ export class VideoLayoutComponent implements OnInit {
     });
   }
 
-  startStream(cameraConfig: CameraConfig) {
-    // FIXME: there is a TypeError where it doesn't find the method startsWith on a string???
-    if (cameraConfig.source.startsWith("rtsp") || cameraConfig.source.startsWith("rtmp")) {
-      const canvas = this.document.getElementById('canvas' + this.cameraIDs.length) as HTMLCanvasElement;
-      const streamPath = cameraConfig.source.split('/').filter(Boolean).pop()!;
-      this.cameraPlayers.push(this.playWsStream(canvas, streamPath));
-    } else if (cameraConfig.source.startsWith("http")) {
-      if (cameraConfig.source.endsWith("m3u8")) {
-        this.cameraPlayers.push(this.playHlsStream(cameraConfig.source));
+  addCamera(cameraConfig: CameraConfig) {
+    this.cameraIDs.push(cameraConfig.ID);
+    this.cdr.detectChanges();
+    this.startStream(cameraConfig.source);
+  }
+
+  startStream(source: string) {
+    if (source.startsWith("rtsp") || source.startsWith("rtmp")) {
+      // TODO: ensure there is a path
+      const streamPath = source.split('/').filter(Boolean).pop() ?? '';
+      // TODO: the canvas is not always the last element
+      this.cameraPlayers.push(this.playWsStream(this.canvases?.last.element!, streamPath));
+    } else if (source.startsWith("http")) {
+      if (source.endsWith("m3u8")) {
+        this.cameraPlayers.push(this.playHlsStream(source));
       } else {
-        this.cameraPlayers.push(this.playDashStream(cameraConfig.source));
+        this.cameraPlayers.push(this.playDashStream(source));
       }
     } else {
       this.notification = "Unsupported stream format";
@@ -61,6 +70,7 @@ export class VideoLayoutComponent implements OnInit {
   }
 
   private getCurrentPlaybackParentElement(): HTMLDivElement | null {
+    // FIXME: document.getElementById won't work - switch with the QueryList
     switch (this.cameraIDs.length) {
       case 1: return this.document.getElementById('singleCamera') as HTMLDivElement;
       case 2: return this.document.getElementById('twoCameras') as HTMLDivElement;
@@ -80,18 +90,12 @@ export class VideoLayoutComponent implements OnInit {
   }
 
   private playWsStream(canvas: HTMLCanvasElement, path: string): JSMpeg.Player {
-    return new JSMpeg.Player('ws://mediamtx.hub.svc.cluster.local:8080/ws/' + path, {
+    return new JSMpeg.Player('ws://mediamtx.hub.svc.cluster.local/ws/' + path, {
       audio: false,
       canvas: canvas,
-      disableGl: true,
+      disableGl: true, // TODO: prefer using WebGL
       pauseWhenHidden: true
     });
-    // return loadPlayer({
-    //   url: 'ws://localhost:8080/ws/' + path,
-    //   canvas: canvas,
-    //   disableGl: true,
-    //   pauseWhenHidden: true,
-    // })
   }
 
   private playDashStream(streamURL: string): dashjs.MediaPlayerClass {

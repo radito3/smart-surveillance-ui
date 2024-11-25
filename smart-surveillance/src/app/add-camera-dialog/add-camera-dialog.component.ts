@@ -36,7 +36,15 @@ export class AddCameraDialogComponent {
 
   onSubmit() {
     this.submitClicked = true;
-    const payload = {...this.form.value} as CameraConfig;
+    const payload = new CameraConfig(
+      this.form.value.cameraID,
+      this.form.value.cameraSource,
+      this.form.value.transcoding,
+      this.form.value.recording,
+      this.form.value.maxReaders
+    );
+    this.submitCamera.emit(payload);
+
     this.httpClient.post('http://mediamtx.hub.svc.cluster.local/endpoints', payload)
       .pipe(timeout(5000))
       .subscribe({
