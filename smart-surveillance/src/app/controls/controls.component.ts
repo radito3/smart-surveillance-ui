@@ -34,7 +34,8 @@ export class ControlsComponent implements OnChanges, OnInit {
 
   constructor(private dialog: MatDialog, private httpClient: HttpClient,
               private notificationService: NotificationService) {
-    this.removedCameraIDs$.pipe(
+    this.removedCameraIDs$
+      .pipe(
         filter(value => value.length > 0),
         switchMap((ID: string) =>
           this.httpClient.delete("http://mediamtx.hub.svc.cluster.local/analysis/" + ID).pipe(
@@ -59,15 +60,23 @@ export class ControlsComponent implements OnChanges, OnInit {
           )
         ),
         takeUntilDestroyed()
-      ).subscribe({
-        next: (ID: string) => this.cameraConfigs.delete(ID),
-        error: (err) => console.error('Error removing camera:', err)
-      });
+    ).subscribe({
+      next: (ID: string) => this.cameraConfigs.delete(ID),
+      error: err => console.error('Error removing camera:', err)
+    });
   }
 
   ngOnInit(): void {
     this.httpClient.post('http://notification-service.hub.svc.cluster.local/config', new Config())
-      .pipe(timeout(5000))
+      .pipe(
+        catchError((err: HttpErrorResponse) => {
+          if (err.status == 409) {
+            return of(null); // config already set
+          }
+          return throwError(() => err);
+        }),
+        timeout(5000)
+      )
       .subscribe({
         next: _ => {
           this.notificationService.connectToNotificationsChannel();
@@ -137,7 +146,7 @@ export class ControlsComponent implements OnChanges, OnInit {
     } else {
       this.isAnalysisOn = true;
       this.analysisOpText = "Stop";
-      for (let [ID, config] of this.cameraConfigs) {
+      for (let ID of this.cameraConfigs.keys()) {
         this.httpClient.post('http://mediamtx.hub.svc.cluster.local/analysis/'+ ID + '?analysisMode=' + this.analysisMode, null)
           .pipe(timeout(5000))
           .subscribe({
