@@ -1,5 +1,5 @@
 # https://mherman.org/blog/dockerizing-an-angular-app/
-FROM node:20.18 as build
+FROM node:20.18 AS build
 
 WORKDIR /app
 
