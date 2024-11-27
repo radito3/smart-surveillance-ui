@@ -3,15 +3,15 @@ import { NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
 import { DOCUMENT } from '@angular/common';
 import { ControlsComponent } from "../controls/controls.component";
 import { NotificationService } from '../services/notification.service';
-import Hls from 'hls.js';
 import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
-// @ts-ignore
-import JSMpeg from '@cycjimmy/jsmpeg-player';
-import * as dashjs from 'dashjs';
 import { Notification } from '../models/notification.model';
 import { CameraConfig } from '../models/camera-config.model';
 import { AfterRenderDirective } from './after-render.directive';
+import { interval, retry, take, throwError } from 'rxjs';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import Hls from 'hls.js';
+import * as dashjs from 'dashjs';
 
 @Component({
   selector: 'app-video-layout',
@@ -22,14 +22,16 @@ import { AfterRenderDirective } from './after-render.directive';
 })
 export class VideoLayoutComponent implements OnInit {
 
-  @ViewChildren(AfterRenderDirective) canvases?: QueryList<AfterRenderDirective>;
-  
+  @ViewChildren(AfterRenderDirective) videoRefs?: QueryList<AfterRenderDirective>;
+
   cameraIDs: Array<string> = [];
-  cameraPlayers: Array<JSMpeg.Player | Hls | dashjs.MediaPlayerClass | null> = [];
+  cameraPlayers: Array<Hls | dashjs.MediaPlayerClass | null> = [];
+
   canvasCloseButtons: Array<boolean> = (new Array(10)).fill(false);
   notification: string | null = null;
 
   constructor(private notificationService: NotificationService,
+              private httpClient: HttpClient,
               private cdr: ChangeDetectorRef,
               @Inject(DOCUMENT) private document: Document) {}
 
@@ -47,104 +49,113 @@ export class VideoLayoutComponent implements OnInit {
   addCamera(cameraConfig: CameraConfig) {
     this.cameraIDs.push(cameraConfig.ID);
     this.cdr.detectChanges();
-    this.startStream(cameraConfig.source);
+    this.startStream(cameraConfig.source, "camera-" + cameraConfig.ID);
   }
 
-  startStream(source: string) {
+  startStream(source: string, path: string) {
     if (source.startsWith("rtsp") || source.startsWith("rtmp")) {
-      // TODO: ensure there is a path
-      const streamPath = source.split('/').filter(Boolean).pop() ?? '';
-      // TODO: the canvas is not always the last element
-      this.cameraPlayers.push(this.playWsStream(this.canvases?.last.element!, streamPath));
-    } else if (source.startsWith("http")) {
+      source = 'http://mediamtx.hub.svc.cluster.local/static/' + path + ".m3u8"
+    }
+    if (source.startsWith("http")) {
       if (source.endsWith("m3u8")) {
-        this.cameraPlayers.push(this.playHlsStream(source));
+        // TODO: the <video> is not always the last element
+        this.cameraPlayers.push(this.playHlsStream(this.videoRefs?.last.element!, source))
       } else {
-        this.cameraPlayers.push(this.playDashStream(source));
+        this.cameraPlayers.push(this.playDashStream(this.videoRefs?.last.element!, source));
       }
     } else {
       this.notification = "Unsupported stream format";
-      setTimeout(() => this.notification = null, 3000); // auto-hide after 3 seconds
+      setTimeout(() => this.notification = null, 3000); // auto-hide after 10 seconds
       console.log("Unsupported stream format");
     }
   }
 
-  private getCurrentPlaybackParentElement(): HTMLDivElement | null {
-    // FIXME: document.getElementById won't work - switch with the QueryList
-    switch (this.cameraIDs.length) {
-      case 1: return this.document.getElementById('singleCamera') as HTMLDivElement;
-      case 2: return this.document.getElementById('twoCameras') as HTMLDivElement;
-      case 3: return this.document.getElementById('threeCameras') as HTMLDivElement;
-      case 4: return this.document.getElementById('fourCameras') as HTMLDivElement;
-      default: return null;
-    }
-  }
-
-  private createVideoElement(parent: HTMLDivElement): HTMLVideoElement {
-    const videoElement = this.document.createElement('video');
-    videoElement.controls = false;
-    videoElement.autoplay = false;
-    // style?
-    parent.appendChild(videoElement);
-    return videoElement;
-  }
-
-  private playWsStream(canvas: HTMLCanvasElement, path: string): JSMpeg.Player {
-    return new JSMpeg.Player('ws://mediamtx.hub.svc.cluster.local/ws/' + path, {
-      audio: false,
-      canvas: canvas,
-      disableGl: true, // TODO: prefer using WebGL
-      pauseWhenHidden: true
-    });
-  }
-
-  private playDashStream(streamURL: string): dashjs.MediaPlayerClass {
-    const video = this.createVideoElement(this.getCurrentPlaybackParentElement()!);
+  private playDashStream(video: HTMLVideoElement, streamURL: string): dashjs.MediaPlayerClass {
     const player = dashjs.MediaPlayer().create();
     player.initialize(video, streamURL, false);
     return player;
   }
 
-  private playHlsStream(streamURL: string): Hls | null {
-    const parent = this.getCurrentPlaybackParentElement();
-    if (parent === null) {
-      // append to cameras array
-    }
-    const videoElement = this.createVideoElement(parent!);
-
-    if (Hls.isSupported()) {
-      let hls = new Hls();
-      hls.loadSource(streamURL);
-      hls.attachMedia(videoElement);
-      return hls;
-    } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
-      // For Safari/iOS
-      videoElement.src = streamURL;
-    } else {
+  private playHlsStream(video: HTMLVideoElement, streamURL: string): Hls | null {
+    if (!Hls.isSupported()) {
       this.notification = "Can't play HLS stream";
-      setTimeout(() => this.notification = null, 3000); // auto-hide after 3 seconds
-      console.log("Can't play HLS stream");
+      setTimeout(() => this.notification = null, 10000); // auto-hide after 10 seconds
+      console.error("Can't play HLS stream");
+      return null;
     }
-    return null;
+
+    let hls = new Hls({
+      // debug: true,
+      capLevelToPlayerSize: true,
+      enableSoftwareAES: false,
+      // progressive: true
+    });
+
+    hls.on(Hls.Events.ERROR, (event, data) => {
+      console.log('error: ', data)
+      if (data.fatal) {
+        switch (data.type) {
+          case Hls.ErrorTypes.MEDIA_ERROR:
+            console.log('fatal media error encountered, try to recover');
+            hls.recoverMediaError();
+            break;
+          case Hls.ErrorTypes.NETWORK_ERROR:
+            console.error('fatal network error encountered:', data);
+            break;
+          default:
+            // cannot recover
+            hls.destroy();
+            this.stopStream(0); // TODO: figure out index
+            break;
+        }
+      }
+    });
+
+    hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+
+    // the HLS manifest file isn't created immediately - poll until it is present
+    this.httpClient.get(streamURL, { observe: 'response', responseType: 'text' })
+      .pipe(
+        retry({
+          count: 10,
+          delay: (err: HttpErrorResponse, retryCount: number) => {
+            if (err.status == 404) {
+              return interval(3000).pipe(take(1));
+            }
+            console.error('Unexpected error while fetching manifest:', err);
+            return throwError(() => err);
+          }
+        })
+      )
+      .subscribe({
+        next: () => {
+          hls.loadSource(streamURL);
+          hls.attachMedia(video);
+        },
+        error: () => {
+          console.error('Manifest not available after retries.');
+          this.stopStream(0); // TODO: figure out index
+        },
+      });
+    return hls;
   }
 
-  stopStream(cameraID: string) {
-    const index = this.cameraIDs.indexOf(cameraID);
+  stopStream(index: number) {
     const player = this.cameraPlayers[index];
 
     if (player === null) {
-      // find video element and set src to ''
-    }
-    if (player instanceof JSMpeg.Player) {
-      player.destroy();
+      const videoElem = this.document.getElementById('video'+ (index + 1)) as HTMLVideoElement;
+      videoElem.src = '';
     }
     if (player instanceof Hls) {
       player.destroy();
     }
+    // this class isn't found by the type system...
     // if (player instanceof dashjs.MediaPlayerClass) {
     //   player.destroy();
     // }
 
+    // FIXME: the page isn't automatically re-rendered after this change
     this.cameraPlayers.splice(index, 1);
     this.cameraIDs.splice(index, 1);
   }

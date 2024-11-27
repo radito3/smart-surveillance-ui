@@ -13,7 +13,7 @@ export class AfterRenderDirective implements OnInit {
     // this.callback();
   }
 
-  get element(): HTMLCanvasElement {
-    return this.el.nativeElement as HTMLCanvasElement;
+  get element(): HTMLVideoElement {
+    return this.el.nativeElement as HTMLVideoElement;
   }
 }

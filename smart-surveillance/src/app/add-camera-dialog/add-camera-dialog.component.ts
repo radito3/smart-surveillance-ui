@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Component, EventEmitter, Output } from '@angular/core';
 import { CameraConfig } from '../models/camera-config.model';
 import { MatError, MatFormField, MatLabel } from '@angular/material/form-field';
@@ -45,7 +45,8 @@ export class AddCameraDialogComponent {
     );
     this.submitCamera.emit(payload);
 
-    this.httpClient.post('http://mediamtx.hub.svc.cluster.local/endpoints', payload)
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    this.httpClient.post('http://mediamtx.hub.svc.cluster.local/endpoints', payload, { headers: headers })
       .pipe(timeout(5000))
       .subscribe({
         next: _ => this.submitCamera.emit(payload),

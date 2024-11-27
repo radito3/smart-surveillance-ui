@@ -12,6 +12,7 @@ export class NotificationService {
   constructor(private zone: NgZone) {}
 
   public connectToNotificationsChannel() {
+    // FIXME: the SSE stream produces errors - reason: unknown so far
     const eventSource = new EventSource('http://notification-service.hub.svc.cluster.local/notifications-stream');
 
     eventSource.onmessage = (event) => {

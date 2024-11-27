@@ -1,24 +1,27 @@
 <div class="video-container" [ngSwitch]="cameraIDs.length">
 
-  <div *ngIf="notification">{{ notification }}</div>
+  <div *ngIf="notification" class="no-cameras">
+    <p>{{ notification }}</p>
+  </div>
 
   <div #singleCamera *ngSwitchCase="1" class="single-camera" (mouseenter)="canvasCloseButtons[0] = true" (mouseleave)="canvasCloseButtons[0] = false">
-    <canvas #video1 appAfterRender></canvas>
-    <button *ngIf="canvasCloseButtons[0]" mat-icon-button class="close-button" (click)="stopStream(cameraIDs[0])">
+    <video #video1 appAfterRender muted></video>
+    <!-- TODO: fix buttons position and appearance -->
+    <button *ngIf="canvasCloseButtons[0]" mat-icon-button class="close-button" (click)="stopStream(0)">
       <mat-icon>close</mat-icon>
     </button>
   </div>
 
   <div #twoCameras *ngSwitchCase="2" class="two-cameras">
     <div (mouseenter)="canvasCloseButtons[1] = true" (mouseleave)="canvasCloseButtons[1] = false">
-      <canvas #video2 appAfterRender></canvas>
-      <button *ngIf="canvasCloseButtons[1]" mat-icon-button class="close-button" (click)="stopStream(cameraIDs[1])">
+      <video #video2 appAfterRender muted></video>
+      <button *ngIf="canvasCloseButtons[1]" mat-icon-button class="close-button" (click)="stopStream(1)">
         <mat-icon>close</mat-icon>
       </button>
     </div>
     <div (mouseenter)="canvasCloseButtons[2] = true" (mouseleave)="canvasCloseButtons[2] = false">
-      <canvas #video3 appAfterRender></canvas>
-      <button *ngIf="canvasCloseButtons[2]" mat-icon-button class="close-button" (click)="stopStream(cameraIDs[2])">
+      <video #video3 appAfterRender muted></video>
+      <button *ngIf="canvasCloseButtons[2]" mat-icon-button class="close-button" (click)="stopStream(2)">
         <mat-icon>close</mat-icon>
       </button>
     </div>
@@ -26,20 +29,20 @@
 
   <div #threeCameras *ngSwitchCase="3" class="three-cameras">
     <div (mouseenter)="canvasCloseButtons[3] = true" (mouseleave)="canvasCloseButtons[3] = false">
-      <canvas #video4 appAfterRender></canvas>
-      <button *ngIf="canvasCloseButtons[3]" mat-icon-button class="close-button" (click)="stopStream(cameraIDs[3])">
+      <video #video4 appAfterRender muted></video>
+      <button *ngIf="canvasCloseButtons[3]" mat-icon-button class="close-button" (click)="stopStream(3)">
         <mat-icon>close</mat-icon>
       </button>
     </div>
     <div (mouseenter)="canvasCloseButtons[4] = true" (mouseleave)="canvasCloseButtons[4] = false">
-      <canvas #video5 appAfterRender></canvas>
-      <button *ngIf="canvasCloseButtons[4]" mat-icon-button class="close-button" (click)="stopStream(cameraIDs[4])">
+      <video #video5 appAfterRender muted></video>
+      <button *ngIf="canvasCloseButtons[4]" mat-icon-button class="close-button" (click)="stopStream(4)">
         <mat-icon>close</mat-icon>
       </button>
     </div>
     <div (mouseenter)="canvasCloseButtons[5] = true" (mouseleave)="canvasCloseButtons[5] = false">
-      <canvas #video6 appAfterRender></canvas>
-      <button *ngIf="canvasCloseButtons[5]" mat-icon-button class="close-button" (click)="stopStream(cameraIDs[5])">
+      <video #video6 appAfterRender muted></video>
+      <button *ngIf="canvasCloseButtons[5]" mat-icon-button class="close-button" (click)="stopStream(5)">
         <mat-icon>close</mat-icon>
       </button>
     </div>
@@ -47,26 +50,26 @@
 
   <div #fourCameras *ngSwitchCase="4" class="four-cameras">
     <div (mouseenter)="canvasCloseButtons[6] = true" (mouseleave)="canvasCloseButtons[6] = false">
-      <canvas #video7 appAfterRender></canvas>
-      <button *ngIf="canvasCloseButtons[6]" mat-icon-button class="close-button" (click)="stopStream(cameraIDs[6])">
+      <video #video7 appAfterRender muted></video>
+      <button *ngIf="canvasCloseButtons[6]" mat-icon-button class="close-button" (click)="stopStream(6)">
         <mat-icon>close</mat-icon>
       </button>
     </div>
     <div (mouseenter)="canvasCloseButtons[7] = true" (mouseleave)="canvasCloseButtons[7] = false">
-      <canvas #video8 appAfterRender></canvas>
-      <button *ngIf="canvasCloseButtons[7]" mat-icon-button class="close-button" (click)="stopStream(cameraIDs[7])">
+      <video #video8 appAfterRender muted></video>
+      <button *ngIf="canvasCloseButtons[7]" mat-icon-button class="close-button" (click)="stopStream(7)">
         <mat-icon>close</mat-icon>
       </button>
     </div>
     <div (mouseenter)="canvasCloseButtons[8] = true" (mouseleave)="canvasCloseButtons[8] = false">
-      <canvas #video9 appAfterRender></canvas>
-      <button *ngIf="canvasCloseButtons[8]" mat-icon-button class="close-button" (click)="stopStream(cameraIDs[8])">
+      <video #video9 appAfterRender muted></video>
+      <button *ngIf="canvasCloseButtons[8]" mat-icon-button class="close-button" (click)="stopStream(8)">
         <mat-icon>close</mat-icon>
       </button>
     </div>
     <div (mouseenter)="canvasCloseButtons[9] = true" (mouseleave)="canvasCloseButtons[9] = false">
-      <canvas #video10 appAfterRender></canvas>
-      <button *ngIf="canvasCloseButtons[9]" mat-icon-button class="close-button" (click)="stopStream(cameraIDs[9])">
+      <video #video10 appAfterRender muted></video>
+      <button *ngIf="canvasCloseButtons[9]" mat-icon-button class="close-button" (click)="stopStream(9)">
         <mat-icon>close</mat-icon>
       </button>
     </div>

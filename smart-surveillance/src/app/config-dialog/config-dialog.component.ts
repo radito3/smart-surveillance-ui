@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Component, EventEmitter, Output } from '@angular/core';
 import { AnalysisMode, Config, WebhookAuthType } from '../models/config.model';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
@@ -111,7 +111,8 @@ export class ConfigDialogComponent {
       payload.smtpCredentials = this.encryptCredentials(payload.smtpCredentials);
     }
 
-    this.httpClient.post('http://notification-service.hub.svc.cluster.local/config', payload)
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    this.httpClient.patch('http://notification-service.hub.svc.cluster.local/config', {config: [payload]}, { headers: headers })
       .pipe(timeout(5000))
       .subscribe({
         next: _ => this.configUpdated.emit(payload),

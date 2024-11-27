@@ -19,7 +19,6 @@
     "@angular/platform-browser": "^18.1.0",
     "@angular/platform-browser-dynamic": "^18.1.0",
     "@angular/router": "^18.1.0",
-    "@cycjimmy/jsmpeg-player": "^6.1.2",
     "dashjs": "^4.7.4",
     "hls.js": "^1.5.17",
     "rxjs": "~7.8.0",

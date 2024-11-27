@@ -4,7 +4,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { AddCameraDialogComponent } from '../add-camera-dialog/add-camera-dialog.component';
 import { ConfigDialogComponent } from '../config-dialog/config-dialog.component';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { AnalysisMode, Config } from '../models/config.model';
 import { NotificationService } from '../services/notification.service';
 import { BehaviorSubject, catchError, filter, map, of, retry, switchMap, throwError, timeout } from 'rxjs';
@@ -67,7 +67,8 @@ export class ControlsComponent implements OnChanges, OnInit {
   }
 
   ngOnInit(): void {
-    this.httpClient.post('http://notification-service.hub.svc.cluster.local/config', new Config())
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    this.httpClient.post('http://notification-service.hub.svc.cluster.local/config', {config: [new Config()]}, { headers: headers })
       .pipe(
         catchError((err: HttpErrorResponse) => {
           if (err.status == 409) {

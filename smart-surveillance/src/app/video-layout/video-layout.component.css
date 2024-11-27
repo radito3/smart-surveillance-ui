@@ -14,22 +14,8 @@
   font-size: 24px;
 }
 
-/* Action button for all cases */
-.action-btn {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  padding: 10px 20px;
-  font-size: 16px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
 /* Single Camera - Takes 80% of the screen */
-.single-camera canvas {
+.single-camera video {
   width: 80%;
   height: 80%;
 
@@ -46,7 +32,7 @@
   width: 100%;
   height: 80%;
 }
-.two-cameras canvas {
+.two-cameras video {
   width: 45%;
   height: auto;
 }
@@ -59,11 +45,11 @@
   width: 100%;
   height: 80%;
 }
-.three-cameras canvas {
+.three-cameras video {
   width: 45%;
   height: auto;
 }
-.three-cameras canvas:nth-child(3) {
+.three-cameras video:nth-child(3) {
   width: 90%;
   margin-top: 10px;
 }
@@ -77,17 +63,17 @@
   width: 100%;
   height: 80%;
 }
-.four-cameras canvas {
+.four-cameras video {
   width: 100%;
   height: auto;
 }
 
-/* TODO: this isn't quite on top of the canvas, but that might not be the button's fault... */
+/* TODO: this isn't quite on top of the video, but that might not be the button's fault... */
 .close-button {
-  position: absolute;
-  top: 10rem;
-  right: 10rem;
-  /* z-index: 1; */
+  /* position: absolute; */
+  top: 2rem;
+  right: 2rem;
+  z-index: 1;
   background-color: white;
   border-radius: 50%;
 }
