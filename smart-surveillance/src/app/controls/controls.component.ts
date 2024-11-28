@@ -109,10 +109,11 @@ export class ControlsComponent implements OnChanges, OnInit {
 
   openAddCameraDialog() {
     // rtsp://localhost:8554/origin
-    const dialogRef = this.dialog.open(AddCameraDialogComponent, {height: '37rem', width: '37rem'});
-    // FIXME: why is this triggered twice?
+    const dialogRef = this.dialog.open(AddCameraDialogComponent, {
+      height: '37rem', width: '37rem',
+      data: { cameraIDs: this.cameraIDs }
+    });
     dialogRef.componentInstance.submitCamera.subscribe((cameraConfig: CameraConfig) => {
-      console.log('adding camera')
       this.cameraAdded.emit(cameraConfig);
       this.cameraConfigs.set(cameraConfig.ID, cameraConfig);
       this.dialog.closeAll();

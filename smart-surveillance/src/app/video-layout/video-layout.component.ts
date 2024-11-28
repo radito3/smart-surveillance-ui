@@ -12,11 +12,13 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import Hls from 'hls.js';
 import * as dashjs from 'dashjs';
 import { environment } from '../../environments/environment';
+import { LoadingIndicatorComponent } from "../loading-indicator/loading-indicator.component";
+import { LoadingService } from '../services/loading.service';
 
 @Component({
   selector: 'app-video-layout',
   standalone: true,
-  imports: [NgIf, NgFor, MatButton, MatIcon, ControlsComponent],
+  imports: [NgIf, NgFor, MatButton, MatIcon, ControlsComponent, LoadingIndicatorComponent],
   templateUrl: './video-layout.component.html',
   styleUrl: './video-layout.component.css'
 })
@@ -28,9 +30,11 @@ export class VideoLayoutComponent implements OnInit {
   cameraPlayers: Array<Hls | dashjs.MediaPlayerClass | null> = [];
 
   videoFeeds = Array(4).fill({ active: false });
+  videosLoading = Array(4).fill(false);
   notification: string | null = null;
 
   constructor(private notificationService: NotificationService,
+              private loadingService: LoadingService,
               private httpClient: HttpClient,
               private cdr: ChangeDetectorRef,
               @Inject(DOCUMENT) private document: Document) {}
@@ -57,7 +61,6 @@ export class VideoLayoutComponent implements OnInit {
   }
 
   startStream(videoElem: HTMLVideoElement, index: number, source: string, path: string) {
-    console.log(this.cameraIDs.length);
     if (source.startsWith("rtsp") || source.startsWith("rtmp")) {
       source = environment.mediaMtxURL + '/static/' + path + ".m3u8"
     }
@@ -71,10 +74,11 @@ export class VideoLayoutComponent implements OnInit {
       this.notification = "Unsupported stream format";
       setTimeout(() => this.notification = null, 10000); // auto-hide after 10 seconds
       console.log("Unsupported stream format");
+
+      this.videoFeeds[index].active = false;
       this.cameraIDs.splice(index, 1);
       this.cdr.detectChanges();
     }
-    console.log(this.cameraIDs.length);
   }
 
   private playDashStream(video: HTMLVideoElement, streamURL: string): dashjs.MediaPlayerClass {
@@ -120,7 +124,8 @@ export class VideoLayoutComponent implements OnInit {
 
     hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
 
-    // TODO: show loading indicator in that respective <div>
+    this.videosLoading[index] = true;
+    this.loadingService.show();
 
     // the HLS manifest file isn't created immediately - poll until it is present
     this.httpClient.get(streamURL, { observe: 'response', responseType: 'text' })
@@ -138,7 +143,8 @@ export class VideoLayoutComponent implements OnInit {
       )
       .subscribe({
         next: () => {
-          // TODO: hide the loading indicator
+          this.videosLoading[index] = false;
+          this.loadingService.hide();
           hls.loadSource(streamURL);
           hls.attachMedia(video);
         },
@@ -194,9 +200,7 @@ export class VideoLayoutComponent implements OnInit {
     }
 
     this.cameraPlayers.splice(index, 1);
-    // console.log(this.cameraIDs.length);
     this.cameraIDs.splice(index, 1);
-    // console.log(this.cameraIDs.length);
     this.cdr.detectChanges();
   }
 

@@ -6,6 +6,7 @@
   </div>
 
   <div *ngFor="let client of videoFeeds; let i = index" [class.hidden]="!client.active">
+    <app-loading-indicator *ngIf="videosLoading[i]"></app-loading-indicator>
     <video #videoElem [attr.id]="'video-' + i" muted></video>
   </div>
 

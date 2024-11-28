@@ -5,6 +5,7 @@
         <mat-error *ngIf="form.get('cameraID')?.hasError('required')">Text is required.</mat-error>
         <mat-error *ngIf="form.get('cameraID')?.hasError('minlength')">Minimum length is 1 character.</mat-error>
         <mat-error *ngIf="form.get('cameraID')?.hasError('maxlength')">Maximum length is 64 characters.</mat-error>
+        <mat-error *ngIf="form.get('cameraID')?.hasError('nonUnique')">Camera with this ID already exists.</mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="fill" class="full-width">
