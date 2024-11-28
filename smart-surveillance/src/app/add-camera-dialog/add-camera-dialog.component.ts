@@ -8,6 +8,7 @@ import { MatInput } from '@angular/material/input';
 import { NgIf } from '@angular/common';
 import { MatButton } from '@angular/material/button';
 import { timeout } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-add-camera-dialog',
@@ -46,7 +47,7 @@ export class AddCameraDialogComponent {
     this.submitCamera.emit(payload);
 
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-    this.httpClient.post('http://mediamtx.hub.svc.cluster.local/endpoints', payload, { headers: headers })
+    this.httpClient.post(environment.mediaMtxURL + '/endpoints', payload, { headers: headers })
       .pipe(timeout(5000))
       .subscribe({
         next: _ => this.submitCamera.emit(payload),

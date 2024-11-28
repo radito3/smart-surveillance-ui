@@ -1,5 +1,5 @@
-import { Component, OnInit, Inject, ChangeDetectorRef, ViewChildren, QueryList } from '@angular/core';
-import { NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
+import { Component, OnInit, Inject, ChangeDetectorRef, ViewChildren, QueryList, ElementRef } from '@angular/core';
+import { NgFor, NgIf } from '@angular/common';
 import { DOCUMENT } from '@angular/common';
 import { ControlsComponent } from "../controls/controls.component";
 import { NotificationService } from '../services/notification.service';
@@ -7,27 +7,27 @@ import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { Notification } from '../models/notification.model';
 import { CameraConfig } from '../models/camera-config.model';
-import { AfterRenderDirective } from './after-render.directive';
-import { interval, retry, take, throwError } from 'rxjs';
+import { filter, from, interval, map, retry, take, throwError } from 'rxjs';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import Hls from 'hls.js';
 import * as dashjs from 'dashjs';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-video-layout',
   standalone: true,
-  imports: [NgSwitch, NgSwitchCase, NgSwitchDefault, NgIf, MatButton, MatIcon, ControlsComponent, AfterRenderDirective],
+  imports: [NgIf, NgFor, MatButton, MatIcon, ControlsComponent],
   templateUrl: './video-layout.component.html',
   styleUrl: './video-layout.component.css'
 })
 export class VideoLayoutComponent implements OnInit {
 
-  @ViewChildren(AfterRenderDirective) videoRefs?: QueryList<AfterRenderDirective>;
+  @ViewChildren('videoElem') videoElements!: QueryList<ElementRef<HTMLVideoElement>>;
 
   cameraIDs: Array<string> = [];
   cameraPlayers: Array<Hls | dashjs.MediaPlayerClass | null> = [];
 
-  canvasCloseButtons: Array<boolean> = (new Array(10)).fill(false);
+  videoFeeds = Array(4).fill({ active: false });
   notification: string | null = null;
 
   constructor(private notificationService: NotificationService,
@@ -49,25 +49,32 @@ export class VideoLayoutComponent implements OnInit {
   addCamera(cameraConfig: CameraConfig) {
     this.cameraIDs.push(cameraConfig.ID);
     this.cdr.detectChanges();
-    this.startStream(cameraConfig.source, "camera-" + cameraConfig.ID);
+
+    const index = this.cameraIDs.length - 1;
+    this.videoFeeds[index].active = true;
+    const videoElem = this.videoElements.toArray()[index].nativeElement;
+    this.startStream(videoElem, index, cameraConfig.source, "camera-" + cameraConfig.ID);
   }
 
-  startStream(source: string, path: string) {
+  startStream(videoElem: HTMLVideoElement, index: number, source: string, path: string) {
+    console.log(this.cameraIDs.length);
     if (source.startsWith("rtsp") || source.startsWith("rtmp")) {
-      source = 'http://mediamtx.hub.svc.cluster.local/static/' + path + ".m3u8"
+      source = environment.mediaMtxURL + '/static/' + path + ".m3u8"
     }
     if (source.startsWith("http")) {
       if (source.endsWith("m3u8")) {
-        // TODO: the <video> is not always the last element
-        this.cameraPlayers.push(this.playHlsStream(this.videoRefs?.last.element!, source))
+        this.cameraPlayers.push(this.playHlsStream(videoElem, index, source))
       } else {
-        this.cameraPlayers.push(this.playDashStream(this.videoRefs?.last.element!, source));
+        this.cameraPlayers.push(this.playDashStream(videoElem, source));
       }
     } else {
       this.notification = "Unsupported stream format";
-      setTimeout(() => this.notification = null, 3000); // auto-hide after 10 seconds
+      setTimeout(() => this.notification = null, 10000); // auto-hide after 10 seconds
       console.log("Unsupported stream format");
+      this.cameraIDs.splice(index, 1);
+      this.cdr.detectChanges();
     }
+    console.log(this.cameraIDs.length);
   }
 
   private playDashStream(video: HTMLVideoElement, streamURL: string): dashjs.MediaPlayerClass {
@@ -76,7 +83,7 @@ export class VideoLayoutComponent implements OnInit {
     return player;
   }
 
-  private playHlsStream(video: HTMLVideoElement, streamURL: string): Hls | null {
+  private playHlsStream(video: HTMLVideoElement, index: number, streamURL: string): Hls | null {
     if (!Hls.isSupported()) {
       this.notification = "Can't play HLS stream";
       setTimeout(() => this.notification = null, 10000); // auto-hide after 10 seconds
@@ -105,13 +112,15 @@ export class VideoLayoutComponent implements OnInit {
           default:
             // cannot recover
             hls.destroy();
-            this.stopStream(0); // TODO: figure out index
+            this.stopStream(index);
             break;
         }
       }
     });
 
     hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+
+    // TODO: show loading indicator in that respective <div>
 
     // the HLS manifest file isn't created immediately - poll until it is present
     this.httpClient.get(streamURL, { observe: 'response', responseType: 'text' })
@@ -129,35 +138,66 @@ export class VideoLayoutComponent implements OnInit {
       )
       .subscribe({
         next: () => {
+          // TODO: hide the loading indicator
           hls.loadSource(streamURL);
           hls.attachMedia(video);
         },
         error: () => {
           console.error('Manifest not available after retries.');
-          this.stopStream(0); // TODO: figure out index
+          this.stopStream(index);
         },
       });
     return hls;
   }
 
+  toggleAnonymyzedStreams(anonymization: boolean) {
+    from(this.cameraPlayers)
+      .pipe(
+        filter(player => player !== null),
+        map((value, index) => ({ index, value }))
+      )
+      .subscribe(tuple => {
+        const idx = tuple.index;
+        const player = tuple.value;
+
+        if (player instanceof Hls) {
+          const streamPath = anonymization ? 'anon-camera-' : 'camera-' + this.cameraIDs[idx]
+          this.changeStream(player, environment.mediaMtxURL + '/static/' + streamPath)
+        } else {
+          // for future dev: handle DASH players...
+          console.log("Anonymizing MPEG-DASH streams not yet implemented");
+        }
+      });
+  }
+
+  private changeStream(player: Hls, newUrl: string) {
+    player.stopLoad();
+    player.loadSource(newUrl);
+    player.startLoad();
+  }
+
+  stopStreams() {
+    for (let i = 0; i < this.cameraIDs.length; i++) {
+      this.stopStream(i)
+    }
+  }
+
   stopStream(index: number) {
-    const player = this.cameraPlayers[index];
+    this.videoFeeds[index].active = false;
+    const player: Hls | dashjs.MediaPlayerClass | null = this.cameraPlayers[index];
 
     if (player === null) {
-      const videoElem = this.document.getElementById('video'+ (index + 1)) as HTMLVideoElement;
+      const videoElem = this.document.getElementById('video'+ index) as HTMLVideoElement;
       videoElem.src = '';
-    }
-    if (player instanceof Hls) {
+    } else {
       player.destroy();
     }
-    // this class isn't found by the type system...
-    // if (player instanceof dashjs.MediaPlayerClass) {
-    //   player.destroy();
-    // }
 
-    // FIXME: the page isn't automatically re-rendered after this change
     this.cameraPlayers.splice(index, 1);
+    // console.log(this.cameraIDs.length);
     this.cameraIDs.splice(index, 1);
+    // console.log(this.cameraIDs.length);
+    this.cdr.detectChanges();
   }
 
 }

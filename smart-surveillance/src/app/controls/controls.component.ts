@@ -7,14 +7,16 @@ import { ConfigDialogComponent } from '../config-dialog/config-dialog.component'
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { AnalysisMode, Config } from '../models/config.model';
 import { NotificationService } from '../services/notification.service';
-import { BehaviorSubject, catchError, filter, map, of, retry, switchMap, throwError, timeout } from 'rxjs';
+import { BehaviorSubject, catchError, filter, from, map, of, retry, switchMap, throwError, timeout } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CameraConfig } from '../models/camera-config.model';
+import { environment } from '../../environments/environment';
+import { NgIf } from '@angular/common';
 
 @Component({
   selector: 'app-controls',
   standalone: true,
-  imports: [MatDialogModule, MatButtonModule, MatIconModule],
+  imports: [NgIf, MatDialogModule, MatButtonModule, MatIconModule],
   templateUrl: './controls.component.html',
   styleUrl: './controls.component.css'
 })
@@ -23,14 +25,18 @@ export class ControlsComponent implements OnChanges, OnInit {
   @Input() cameraIDs: Array<string> = [];
 
   @Output() cameraAdded: EventEmitter<CameraConfig> = new EventEmitter();
+  @Output() anonymizationToggled: EventEmitter<boolean> = new EventEmitter();
+  @Output() camerasClosed: EventEmitter<boolean> = new EventEmitter();
 
   analysisOpText: string = "Start";
+  anonymyzePrefix: string = "";
   cameraConfigs: Map<string, CameraConfig> = new Map();
 
   private analysisMode: AnalysisMode = AnalysisMode.Behaviour;
   private removedCameraIDs$ = new BehaviorSubject<string>('');
   private notificationsChannelOpen: boolean = false;
   private isAnalysisOn: boolean = false;
+  private anonymizationState: boolean = false;
 
   constructor(private dialog: MatDialog, private httpClient: HttpClient,
               private notificationService: NotificationService) {
@@ -38,7 +44,7 @@ export class ControlsComponent implements OnChanges, OnInit {
       .pipe(
         filter(value => value.length > 0),
         switchMap((ID: string) =>
-          this.httpClient.delete("http://mediamtx.hub.svc.cluster.local/analysis/" + ID).pipe(
+          this.httpClient.delete(environment.mediaMtxURL + '/analysis/' + ID).pipe(
             timeout(5000),
             retry(3),
             catchError(err => {
@@ -49,7 +55,7 @@ export class ControlsComponent implements OnChanges, OnInit {
           )
         ),
         switchMap((ID: string) =>
-          this.httpClient.delete("http://mediamtx.hub.svc.cluster.local/endpoints/" + ID).pipe(
+          this.httpClient.delete(environment.mediaMtxURL + '/endpoints/' + ID).pipe(
             timeout(5000),
             retry(3),
             catchError(err => {
@@ -68,7 +74,7 @@ export class ControlsComponent implements OnChanges, OnInit {
 
   ngOnInit(): void {
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-    this.httpClient.post('http://notification-service.hub.svc.cluster.local/config', {config: [new Config()]}, { headers: headers })
+    this.httpClient.post(environment.notificationServiceURL + '/config', {config: [new Config()]}, { headers: headers })
       .pipe(
         catchError((err: HttpErrorResponse) => {
           if (err.status == 409) {
@@ -102,14 +108,17 @@ export class ControlsComponent implements OnChanges, OnInit {
   }
 
   openAddCameraDialog() {
+    // rtsp://localhost:8554/origin
     const dialogRef = this.dialog.open(AddCameraDialogComponent, {height: '37rem', width: '37rem'});
+    // FIXME: why is this triggered twice?
     dialogRef.componentInstance.submitCamera.subscribe((cameraConfig: CameraConfig) => {
+      console.log('adding camera')
       this.cameraAdded.emit(cameraConfig);
       this.cameraConfigs.set(cameraConfig.ID, cameraConfig);
       this.dialog.closeAll();
 
       if (this.isAnalysisOn) {
-        this.httpClient.post('http://mediamtx.hub.svc.cluster.local/analysis/' + cameraConfig.ID + '?analysisMode=' + this.analysisMode, null)
+        this.httpClient.post(environment.mediaMtxURL + '/analysis/' + cameraConfig.ID + '?analysisMode=' + this.analysisMode, null)
           .pipe(timeout(5000))
           .subscribe({
             error: err => console.error('Could not start analysis for Camera ' + cameraConfig.ID, err)
@@ -141,7 +150,7 @@ export class ControlsComponent implements OnChanges, OnInit {
       this.analysisOpText = "Start";
 
       for (let ID of this.cameraConfigs.keys()) {
-        this.httpClient.delete('http://mediamtx.hub.svc.cluster.local/analysis/'+ ID)
+        this.httpClient.delete(environment.mediaMtxURL + '/analysis/'+ ID)
           .pipe(timeout(5000), retry(3))
           .subscribe({
             error: err => console.error('Could not stop analysis for Camera ' + ID, err)
@@ -152,7 +161,7 @@ export class ControlsComponent implements OnChanges, OnInit {
       this.analysisOpText = "Stop";
 
       for (let ID of this.cameraConfigs.keys()) {
-        this.httpClient.post('http://mediamtx.hub.svc.cluster.local/analysis/'+ ID + '?analysisMode=' + this.analysisMode, null)
+        this.httpClient.post(environment.mediaMtxURL + '/analysis/'+ ID + '?analysisMode=' + this.analysisMode, null)
           .pipe(timeout(5000))
           .subscribe({
             error: err => console.error('Could not start analysis for Camera ' + ID, err)
@@ -161,16 +170,25 @@ export class ControlsComponent implements OnChanges, OnInit {
     }
   }
 
-  anonymyze() {
-    for (let ID of this.cameraConfigs.keys()) {
-      this.httpClient.post('http://mediamtx.hub.svc.cluster.local/anonymyze/camera-' + ID, null)
-        .pipe(timeout(5000))
-        .subscribe({
-          error: err => console.error('Could not anonymyze Stream ' + ID, err)
-        });
-      // TODO: recreate the players with a anon- prefixed path
-    }
-    // what about turning it off?
+  toggleAnonymisation() {
+    from([...this.cameraConfigs.keys()])
+      .pipe(
+        switchMap(ID => this.httpClient.post(environment.mediaMtxURL + '/anonymyze/camera-' + ID, null)
+          .pipe(timeout(5000))
+        )
+      )
+      .subscribe({
+        next: () => {
+          this.anonymizationState = !this.anonymizationState;
+          this.anonymizationToggled.emit(this.anonymizationState);
+          this.anonymyzePrefix = this.anonymizationState ? "De-" : "";
+        },
+        error: err => console.error('Could not anonymyze streams: ', err)
+      });
+  }
+
+  closeCameras() {
+    this.camerasClosed.emit(true);
   }
 
 }

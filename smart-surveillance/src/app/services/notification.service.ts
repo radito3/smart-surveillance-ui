@@ -1,6 +1,7 @@
 import { Injectable, NgZone } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { Notification } from '../models/notification.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +14,7 @@ export class NotificationService {
 
   public connectToNotificationsChannel() {
     // FIXME: the SSE stream produces errors - reason: unknown so far
-    const eventSource = new EventSource('http://notification-service.hub.svc.cluster.local/notifications-stream');
+    const eventSource = new EventSource(environment.notificationServiceURL + '/notifications-stream');
 
     eventSource.onmessage = (event) => {
       this.zone.run(() => {

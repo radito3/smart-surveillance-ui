@@ -24,11 +24,18 @@
   left: 2rem;      /* Distance from the left side of the screen */
 }
 
+.close-button-container {
+  position: fixed;
+  bottom: 2rem;
+  left: 46%;
+}
+
 /* Common tooltip styling */
 .tooltip {
   position: absolute;        /* Tooltip positioning relative to the button */
   /* background-color: #333;    /* Dark background for the tooltip */
-  color: #050404;          /* will be whiter when the background is grey */
+  /* color: #050404; */
+  color: white;
   padding: 0.5rem;           /* Spacing inside the tooltip */
   border-radius: 0.3rem;     /* Rounded corners for the tooltip */
   font-size: 1rem;

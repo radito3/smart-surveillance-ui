@@ -48,10 +48,10 @@
       mat-mini-fab
       color="accent"
       class="anonymyze-button"
-      (click)="anonymyze()"
+      (click)="toggleAnonymisation()"
     >
       <mat-icon>not_interested</mat-icon>
-      <span class="anonymyze-tooltip tooltip tooltip-left">Anonymyze</span>
+      <span class="anonymyze-tooltip tooltip tooltip-left">{{ anonymyzePrefix }}Anonymyze</span>
     </button>
   </div>
 
@@ -66,6 +66,17 @@
       <span class="add-camera-tooltip tooltip tooltip-left">Connect camera</span>
     </button>
   </div>
+</div>
+
+<div class="close-button-container" *ngIf="cameraIDs.length != 0">
+  <button
+    mat-raised-button
+    color="accent"
+    class="close-button"
+    (click)="closeCameras()"
+  >
+  Close video feeds
+  </button>
 </div>
 
 <div class="config-button-container">

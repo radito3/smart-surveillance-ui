@@ -10,6 +10,7 @@ import { MatSlideToggle } from '@angular/material/slide-toggle';
 import { MatOption, MatSelect } from '@angular/material/select';
 import { retry, timeout } from 'rxjs';
 import * as Forge from 'node-forge';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-config-dialog',
@@ -102,7 +103,6 @@ export class ConfigDialogComponent {
 
   onSubmit() {
     this.submitClicked = true;
-    // FIXME: this won't work - do the same as in AddCameraDialog
     const payload = {...this.form.value} as Config;
     if (payload.webhookCredentials) {
       payload.webhookCredentials = this.encryptCredentials(payload.webhookCredentials);
@@ -112,7 +112,7 @@ export class ConfigDialogComponent {
     }
 
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-    this.httpClient.patch('http://notification-service.hub.svc.cluster.local/config', {config: [payload]}, { headers: headers })
+    this.httpClient.patch(environment.notificationServiceURL + '/config', {config: [payload]}, { headers: headers })
       .pipe(timeout(5000))
       .subscribe({
         next: _ => this.configUpdated.emit(payload),

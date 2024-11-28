@@ -8,21 +8,22 @@
   position: relative;
 }
 
+.hidden {
+  display: none;
+}
+
 /* No Cameras */
 .no-cameras {
   text-align: center;
   font-size: 24px;
+  color: white;
 }
 
 /* Single Camera - Takes 80% of the screen */
-.single-camera video {
+video {
   width: 80%;
   height: 80%;
-
-  /* FIXME: this is sort of in the middle, vertically, but it is glued to the left side of the screen */
-  display: flex;
-  justify-content: center;
-  align-content: center;
+  align-self: center;
 }
 
 /* Two Cameras - 45% width each, side by side */
@@ -66,14 +67,4 @@
 .four-cameras video {
   width: 100%;
   height: auto;
-}
-
-/* TODO: this isn't quite on top of the video, but that might not be the button's fault... */
-.close-button {
-  /* position: absolute; */
-  top: 2rem;
-  right: 2rem;
-  z-index: 1;
-  background-color: white;
-  border-radius: 50%;
 }
