@@ -7,7 +7,7 @@ import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { Notification } from '../models/notification.model';
 import { CameraConfig } from '../models/camera-config.model';
-import { filter, from, interval, map, retry, take, throwError } from 'rxjs';
+import { BehaviorSubject, filter, from, interval, map, range, retry, take, throwError } from 'rxjs';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import Hls from 'hls.js';
 import * as dashjs from 'dashjs';
@@ -27,6 +27,7 @@ export class VideoLayoutComponent implements OnInit {
   @ViewChildren('videoElem') videoElements!: QueryList<ElementRef<HTMLVideoElement>>;
 
   cameraIDs: Array<string> = [];
+  cameraIDsView$ = new BehaviorSubject<string[]>([]);
   cameraPlayers: Array<Hls | dashjs.MediaPlayerClass | null> = [];
 
   videoFeeds = Array(4).fill({ active: false });
@@ -52,6 +53,7 @@ export class VideoLayoutComponent implements OnInit {
 
   addCamera(cameraConfig: CameraConfig) {
     this.cameraIDs.push(cameraConfig.ID);
+    this.cameraIDsView$.next(this.cameraIDs);
     this.cdr.detectChanges();
 
     const index = this.cameraIDs.length - 1;
@@ -77,6 +79,7 @@ export class VideoLayoutComponent implements OnInit {
 
       this.videoFeeds[index].active = false;
       this.cameraIDs.splice(index, 1);
+      this.cameraIDsView$.next(this.cameraIDs);
       this.cdr.detectChanges();
     }
   }
@@ -162,7 +165,7 @@ export class VideoLayoutComponent implements OnInit {
         filter(player => player !== null),
         map((value, index) => ({ index, value }))
       )
-      .subscribe(tuple => {
+      .forEach(tuple => {
         const idx = tuple.index;
         const player = tuple.value;
 
@@ -182,10 +185,9 @@ export class VideoLayoutComponent implements OnInit {
     player.startLoad();
   }
 
-  stopStreams() {
-    for (let i = 0; i < this.cameraIDs.length; i++) {
-      this.stopStream(i)
-    }
+  stopAllStreams() {
+    const numCameras = this.cameraIDs.length;
+    range(0, numCameras).forEach(() => this.stopStream(0));
   }
 
   stopStream(index: number) {
@@ -201,6 +203,7 @@ export class VideoLayoutComponent implements OnInit {
 
     this.cameraPlayers.splice(index, 1);
     this.cameraIDs.splice(index, 1);
+    this.cameraIDsView$.next(this.cameraIDs);
     this.cdr.detectChanges();
   }
 

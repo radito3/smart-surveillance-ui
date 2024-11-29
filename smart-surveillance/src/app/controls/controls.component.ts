@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -7,7 +7,7 @@ import { ConfigDialogComponent } from '../config-dialog/config-dialog.component'
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { AnalysisMode, Config } from '../models/config.model';
 import { NotificationService } from '../services/notification.service';
-import { BehaviorSubject, catchError, filter, from, map, of, retry, switchMap, throwError, timeout } from 'rxjs';
+import { BehaviorSubject, catchError, filter, from, iif, map, Observable, of, retry, Subscription, switchMap, tap, throwError, timeout } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CameraConfig } from '../models/camera-config.model';
 import { environment } from '../../environments/environment';
@@ -20,14 +20,15 @@ import { NgIf } from '@angular/common';
   templateUrl: './controls.component.html',
   styleUrl: './controls.component.css'
 })
-export class ControlsComponent implements OnChanges, OnInit {
+export class ControlsComponent implements OnInit, OnDestroy {
 
-  @Input() cameraIDs: Array<string> = [];
+  @Input() cameraIDs$?: Observable<string[]>;
 
   @Output() cameraAdded: EventEmitter<CameraConfig> = new EventEmitter();
   @Output() anonymizationToggled: EventEmitter<boolean> = new EventEmitter();
   @Output() camerasClosed: EventEmitter<boolean> = new EventEmitter();
 
+  cameraIDs: Array<string> = [];
   analysisOpText: string = "Start";
   anonymyzePrefix: string = "";
   cameraConfigs: Map<string, CameraConfig> = new Map();
@@ -37,42 +38,56 @@ export class ControlsComponent implements OnChanges, OnInit {
   private notificationsChannelOpen: boolean = false;
   private isAnalysisOn: boolean = false;
   private anonymizationState: boolean = false;
+  private subscription?: Subscription;
 
-  constructor(private dialog: MatDialog, private httpClient: HttpClient,
+  constructor(private dialog: MatDialog,
+              private httpClient: HttpClient,
               private notificationService: NotificationService) {
     this.removedCameraIDs$
       .pipe(
         filter(value => value.length > 0),
+        tap(ID => console.log('Cleaning up resources for Camera with ID: ' + ID)),
         switchMap((ID: string) =>
-          this.httpClient.delete(environment.mediaMtxURL + '/analysis/' + ID).pipe(
-            timeout(5000),
-            retry(3),
-            catchError(err => {
-              console.error('Stop analysis request failed:', err);
-              return throwError(() => err);
-            }),
-            map(_ => ID)
+          iif(() => this.isAnalysisOn,
+            this.httpClient.delete(environment.mediaMtxURL + '/analysis/' + ID, { responseType: 'text' })
+              .pipe(
+                timeout(5000),
+                retry(3),
+                catchError(err => {
+                  console.error('Stop analysis request failed:', err);
+                  return throwError(() => err);
+                }),
+                map(_ => ID)
+              ),
+            of(ID)
           )
         ),
         switchMap((ID: string) =>
-          this.httpClient.delete(environment.mediaMtxURL + '/endpoints/' + ID).pipe(
-            timeout(5000),
-            retry(3),
-            catchError(err => {
-              console.error('Delete endpoint request failed:', err);
-              return throwError(() => err);
-            }),
-            map(_ => ID)
-          )
+          // since the Web UI will delete endpoints, it acts as an Admin panel for the surveillance system
+          // if any other non-browser clients are connected to the endpoints, their connections will be broken
+          this.httpClient.delete(environment.mediaMtxURL + '/endpoints/camera-' + ID, { responseType: 'text' })
+            .pipe(
+              timeout(5000),
+              retry(3),
+              catchError(err => {
+                // TODO: find out why the endpoint is gone before this delete call
+                console.error('Delete endpoint request failed:', err);
+                return throwError(() => err);
+              }),
+              map(_ => ID)
+            )
         ),
         takeUntilDestroyed()
-    ).subscribe({
-      next: (ID: string) => this.cameraConfigs.delete(ID),
-      error: err => console.error('Error removing camera:', err)
-    });
+      )
+      .subscribe({
+        next: (ID: string) => this.cameraConfigs.delete(ID),
+        error: err => console.error('Error removing camera:', err)
+      });
   }
 
   ngOnInit(): void {
+    this.subscription = this.cameraIDs$?.subscribe(cameraIDs => this.handleCameraIDsChanges(cameraIDs));
+
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
     this.httpClient.post(environment.notificationServiceURL + '/config', {config: [new Config()]}, { headers: headers })
       .pipe(
@@ -85,7 +100,7 @@ export class ControlsComponent implements OnChanges, OnInit {
         timeout(5000)
       )
       .subscribe({
-        next: _ => {
+        next: () => {
           this.notificationService.connectToNotificationsChannel();
           this.notificationsChannelOpen = true;
         },
@@ -93,22 +108,26 @@ export class ControlsComponent implements OnChanges, OnInit {
       });
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['cameraIDs'] && this.cameraIDs.length > 0) {
+  ngOnDestroy(): void {
+    this.subscription?.unsubscribe();
+  }
+
+  private handleCameraIDsChanges(cameraIDs: string[]) {
+    this.cameraIDs = cameraIDs;
+    if (cameraIDs.length > 0) {
       let IDsNotPresent: string[] = [];
 
       for (let ID of this.cameraConfigs.keys()) {
-        if (!this.cameraIDs.includes(ID)) {
+        if (!cameraIDs.includes(ID)) {
           IDsNotPresent.push(ID);
         }
       }
 
-      IDsNotPresent.forEach(this.removedCameraIDs$.next);
+      IDsNotPresent.forEach(ID => this.removedCameraIDs$.next(ID));
     }
   }
 
   openAddCameraDialog() {
-    // rtsp://localhost:8554/origin
     const dialogRef = this.dialog.open(AddCameraDialogComponent, {
       height: '37rem', width: '37rem',
       data: { cameraIDs: this.cameraIDs }
@@ -151,7 +170,7 @@ export class ControlsComponent implements OnChanges, OnInit {
       this.analysisOpText = "Start";
 
       for (let ID of this.cameraConfigs.keys()) {
-        this.httpClient.delete(environment.mediaMtxURL + '/analysis/'+ ID)
+        this.httpClient.delete(environment.mediaMtxURL + '/analysis/'+ ID, { responseType: 'text' })
           .pipe(timeout(5000), retry(3))
           .subscribe({
             error: err => console.error('Could not stop analysis for Camera ' + ID, err)

@@ -1,5 +1,5 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Inject, Output } from '@angular/core';
 import { CameraConfig } from '../models/camera-config.model';
 import { MatError, MatFormField, MatLabel } from '@angular/material/form-field';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
@@ -9,27 +9,28 @@ import { NgIf } from '@angular/common';
 import { MatButton } from '@angular/material/button';
 import { timeout } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-add-camera-dialog',
   standalone: true,
-  imports: [ReactiveFormsModule, MatFormField, MatLabel, MatInput, MatError, MatSlideToggle, MatButton, NgIf],
+  imports: [ReactiveFormsModule, NgIf, MatFormField, MatLabel, MatInput, MatError, MatSlideToggle, MatButton],
   templateUrl: './add-camera-dialog.component.html',
   styleUrl: './add-camera-dialog.component.css'
 })
 export class AddCameraDialogComponent {
-
-  @Input() cameraIDs: Array<string> = [];
 
   @Output() submitCamera = new EventEmitter<CameraConfig>();
 
   form: FormGroup;
   submitClicked: boolean;
 
-  constructor(private httpClient: HttpClient, private fb: FormBuilder) {
+  constructor(private httpClient: HttpClient,
+              private fb: FormBuilder,
+              @Inject(MAT_DIALOG_DATA) private data: any) {
     this.submitClicked = false;
     this.form = this.fb.group({
-      cameraID: ['', [Validators.required, this.cameraIDUniquenessValidator(this), Validators.minLength(1), Validators.maxLength(64)]],
+      cameraID: ['', [Validators.required, this.cameraIDUniquenessValidator(data.cameraIDs), Validators.minLength(1), Validators.maxLength(64)]],
       cameraSource: ['', [Validators.required, Validators.pattern('(rtsp|rtmp|http)://.+')]],
       transcoding: [false],
       recording: [false],
@@ -37,11 +38,10 @@ export class AddCameraDialogComponent {
     });
   }
 
-  cameraIDUniquenessValidator(component: AddCameraDialogComponent): (group: AbstractControl) => ValidationErrors | null {
-    // FIXME: the array isn't being passed by reference but by snapshot - need to have an active view of the array
+  cameraIDUniquenessValidator(cameraIDs: string[]): (group: AbstractControl) => ValidationErrors | null {
     return (group: AbstractControl) => {
-      // console.log('cameraIDs', component.cameraIDs);
-      if (component.cameraIDs.includes(group.value)) {
+      const cameraID = group.value
+      if (cameraID && cameraID.length > 0 && cameraIDs.includes(cameraID)) {
         return { nonUnique: true };
       }
       return null;
@@ -62,7 +62,7 @@ export class AddCameraDialogComponent {
     this.httpClient.post(environment.mediaMtxURL + '/endpoints', payload, { headers: headers })
       .pipe(timeout(5000))
       .subscribe({
-        next: _ => this.submitCamera.emit(payload),
+        next: () => this.submitCamera.emit(payload),
         error: err => {
           console.error('Could not create camera:', err);
           this.submitClicked = false;

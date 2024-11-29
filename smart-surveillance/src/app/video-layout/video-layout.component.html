@@ -15,8 +15,8 @@
   </div>
 
   <app-controls
-    [cameraIDs]="cameraIDs"
+    [cameraIDs$]="cameraIDsView$.asObservable()"
     (cameraAdded)="addCamera($event)"
     (anonymizationToggled)="toggleAnonymyzedStreams($event)"
-    (camerasClosed)="stopStreams()" />
+    (camerasClosed)="stopAllStreams()" />
 </div>
