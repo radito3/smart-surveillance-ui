@@ -43,11 +43,9 @@ export class VideoLayoutComponent implements OnInit {
   ngOnInit(): void {
     // TODO: perform a GET /endpoints to check any existing cameras, in case the UI pod has been restarted
 
-    this.notificationService.notifications$.subscribe({
-      next: (payload: Notification) => {
-        this.notification = payload.message;
-        setTimeout(() => this.notification = null, 10000); // auto-hide after 10 seconds
-      }
+    this.notificationService.notifications$.subscribe((payload: Notification) => {
+      this.notification = payload.message;
+      setTimeout(() => this.notification = null, 10000); // auto-hide after 10 seconds
     });
   }
 

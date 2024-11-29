@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -7,7 +7,7 @@ import { ConfigDialogComponent } from '../config-dialog/config-dialog.component'
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { AnalysisMode, Config } from '../models/config.model';
 import { NotificationService } from '../services/notification.service';
-import { BehaviorSubject, catchError, filter, from, iif, map, Observable, of, retry, Subscription, switchMap, tap, throwError, timeout } from 'rxjs';
+import { BehaviorSubject, catchError, filter, from, map, Observable, of, retry, switchMap, tap, throwError, timeout } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CameraConfig } from '../models/camera-config.model';
 import { environment } from '../../environments/environment';
@@ -20,7 +20,7 @@ import { NgIf } from '@angular/common';
   templateUrl: './controls.component.html',
   styleUrl: './controls.component.css'
 })
-export class ControlsComponent implements OnInit, OnDestroy {
+export class ControlsComponent implements OnInit {
 
   @Input() cameraIDs$?: Observable<string[]>;
 
@@ -38,7 +38,6 @@ export class ControlsComponent implements OnInit, OnDestroy {
   private notificationsChannelOpen: boolean = false;
   private isAnalysisOn: boolean = false;
   private anonymizationState: boolean = false;
-  private subscription?: Subscription;
 
   constructor(private dialog: MatDialog,
               private httpClient: HttpClient,
@@ -48,34 +47,14 @@ export class ControlsComponent implements OnInit, OnDestroy {
         filter(value => value.length > 0),
         tap(ID => console.log('Cleaning up resources for Camera with ID: ' + ID)),
         switchMap((ID: string) =>
-          iif(() => this.isAnalysisOn,
-            this.httpClient.delete(environment.mediaMtxURL + '/analysis/' + ID, { responseType: 'text' })
-              .pipe(
-                timeout(5000),
-                retry(3),
-                catchError(err => {
-                  console.error('Stop analysis request failed:', err);
-                  return throwError(() => err);
-                }),
-                map(_ => ID)
-              ),
-            of(ID)
-          )
+          this.isAnalysisOn
+            ? this.makeDeleteRequest('/analysis/' + ID).pipe(map(() => ID))
+            : of(ID)
         ),
         switchMap((ID: string) =>
           // since the Web UI will delete endpoints, it acts as an Admin panel for the surveillance system
           // if any other non-browser clients are connected to the endpoints, their connections will be broken
-          this.httpClient.delete(environment.mediaMtxURL + '/endpoints/camera-' + ID, { responseType: 'text' })
-            .pipe(
-              timeout(5000),
-              retry(3),
-              catchError(err => {
-                // TODO: find out why the endpoint is gone before this delete call
-                console.error('Delete endpoint request failed:', err);
-                return throwError(() => err);
-              }),
-              map(_ => ID)
-            )
+          this.makeDeleteRequest('/endpoints/camera-' + ID).pipe(map(() => ID))
         ),
         takeUntilDestroyed()
       )
@@ -85,8 +64,21 @@ export class ControlsComponent implements OnInit, OnDestroy {
       });
   }
 
+  private makeDeleteRequest(path: string): Observable<any> {
+    return this.httpClient.delete(environment.mediaMtxURL + path, { responseType: 'text' })
+      .pipe(
+        timeout(5000),
+        retry(3),
+        catchError(err => {
+          console.error('DELETE ' + path + ' request failed:', err);
+          return throwError(() => err);
+        }),
+      );
+  }
+
   ngOnInit(): void {
-    this.subscription = this.cameraIDs$?.subscribe(cameraIDs => this.handleCameraIDsChanges(cameraIDs));
+    this.cameraIDs$?.pipe(takeUntilDestroyed())
+      .subscribe(cameraIDs => this.handleCameraIDsChanges(cameraIDs));
 
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
     this.httpClient.post(environment.notificationServiceURL + '/config', {config: [new Config()]}, { headers: headers })
@@ -106,10 +98,6 @@ export class ControlsComponent implements OnInit, OnDestroy {
         },
         error: err => console.error('Could not send config request:', err)
       });
-  }
-
-  ngOnDestroy(): void {
-    this.subscription?.unsubscribe();
   }
 
   private handleCameraIDsChanges(cameraIDs: string[]) {
