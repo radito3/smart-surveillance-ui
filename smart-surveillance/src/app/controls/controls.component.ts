@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -7,7 +7,7 @@ import { ConfigDialogComponent } from '../config-dialog/config-dialog.component'
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { AnalysisMode, Config } from '../models/config.model';
 import { NotificationService } from '../services/notification.service';
-import { BehaviorSubject, catchError, filter, from, map, Observable, of, retry, switchMap, tap, throwError, timeout } from 'rxjs';
+import { BehaviorSubject, catchError, filter, from, map, Observable, of, retry, Subject, switchMap, takeUntil, tap, throwError, timeout } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CameraConfig } from '../models/camera-config.model';
 import { environment } from '../../environments/environment';
@@ -20,7 +20,7 @@ import { NgIf } from '@angular/common';
   templateUrl: './controls.component.html',
   styleUrl: './controls.component.css'
 })
-export class ControlsComponent implements OnInit {
+export class ControlsComponent implements OnInit, OnDestroy {
 
   @Input() cameraIDs$?: Observable<string[]>;
 
@@ -38,6 +38,7 @@ export class ControlsComponent implements OnInit {
   private notificationsChannelOpen: boolean = false;
   private isAnalysisOn: boolean = false;
   private anonymizationState: boolean = false;
+  private sentinel = new Subject<boolean>();
 
   constructor(private dialog: MatDialog,
               private httpClient: HttpClient,
@@ -69,7 +70,11 @@ export class ControlsComponent implements OnInit {
       .pipe(
         timeout(5000),
         retry(3),
-        catchError(err => {
+        catchError((err: HttpErrorResponse) => {
+          if (err.status == 404) {
+            console.log('Resource ' + path + ' already deleted');
+            return of(null);
+          }
           console.error('DELETE ' + path + ' request failed:', err);
           return throwError(() => err);
         }),
@@ -77,7 +82,9 @@ export class ControlsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.cameraIDs$?.pipe(takeUntilDestroyed())
+    // this is using the takeUntil idiom instead of takeUntilDestroyed because
+    // the latter can only be used in the constructor and cameraIDs$ is not initialzed yet
+    this.cameraIDs$?.pipe(takeUntil(this.sentinel))
       .subscribe(cameraIDs => this.handleCameraIDsChanges(cameraIDs));
 
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
@@ -100,19 +107,22 @@ export class ControlsComponent implements OnInit {
       });
   }
 
+  ngOnDestroy(): void {
+    this.sentinel.next(true);
+    this.sentinel.complete();
+  }
+
   private handleCameraIDsChanges(cameraIDs: string[]) {
     this.cameraIDs = cameraIDs;
-    if (cameraIDs.length > 0) {
-      let IDsNotPresent: string[] = [];
+    let IDsNotPresent: string[] = [];
 
-      for (let ID of this.cameraConfigs.keys()) {
-        if (!cameraIDs.includes(ID)) {
-          IDsNotPresent.push(ID);
-        }
+    for (let ID of this.cameraConfigs.keys()) {
+      if (!cameraIDs.includes(ID)) {
+        IDsNotPresent.push(ID);
       }
-
-      IDsNotPresent.forEach(ID => this.removedCameraIDs$.next(ID));
     }
+
+    IDsNotPresent.forEach(ID => this.removedCameraIDs$.next(ID));
   }
 
   openAddCameraDialog() {

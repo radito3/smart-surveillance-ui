@@ -115,7 +115,7 @@ export class ConfigDialogComponent {
     this.httpClient.patch(environment.notificationServiceURL + '/config', {config: [payload]}, { headers: headers })
       .pipe(timeout(5000))
       .subscribe({
-        next: _ => this.configUpdated.emit(payload),
+        next: () => this.configUpdated.emit(payload),
         error: err => {
           console.error('Could not send config request:', err);
           this.submitClicked = false;
@@ -128,9 +128,7 @@ export class ConfigDialogComponent {
     // openssl rsa -pubout -in private_key.pem -out public_key.pem
 
     const pubKey = Forge.pki.publicKeyFromPem(this.credsEncryptionKey);
-
-    const encryptedCreds = pubKey.encrypt(creds);
-    return encryptedCreds;
+    return pubKey.encrypt(creds);
   }
 
 }

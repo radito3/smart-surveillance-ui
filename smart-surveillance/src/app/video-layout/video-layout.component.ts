@@ -1,4 +1,4 @@
-import { Component, OnInit, Inject, ChangeDetectorRef, ViewChildren, QueryList, ElementRef } from '@angular/core';
+import { Component, OnInit, Inject, ChangeDetectorRef, ViewChildren, QueryList, ElementRef, AfterViewInit } from '@angular/core';
 import { NgFor, NgIf } from '@angular/common';
 import { DOCUMENT } from '@angular/common';
 import { ControlsComponent } from "../controls/controls.component";
@@ -7,13 +7,14 @@ import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { Notification } from '../models/notification.model';
 import { CameraConfig } from '../models/camera-config.model';
-import { BehaviorSubject, filter, from, interval, map, range, retry, take, throwError } from 'rxjs';
+import { BehaviorSubject, filter, from, map, Observable, range, retry, switchMap, throwError, timeout, timer } from 'rxjs';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import Hls from 'hls.js';
 import * as dashjs from 'dashjs';
 import { environment } from '../../environments/environment';
 import { LoadingIndicatorComponent } from "../loading-indicator/loading-indicator.component";
 import { LoadingService } from '../services/loading.service';
+import { Endpoints } from '../models/endpoints.model';
 
 @Component({
   selector: 'app-video-layout',
@@ -22,7 +23,7 @@ import { LoadingService } from '../services/loading.service';
   templateUrl: './video-layout.component.html',
   styleUrl: './video-layout.component.css'
 })
-export class VideoLayoutComponent implements OnInit {
+export class VideoLayoutComponent implements OnInit, AfterViewInit {
 
   @ViewChildren('videoElem') videoElements!: QueryList<ElementRef<HTMLVideoElement>>;
 
@@ -32,21 +33,33 @@ export class VideoLayoutComponent implements OnInit {
 
   videoFeeds = Array(4).fill({ active: false });
   videosLoading = Array(4).fill(false);
+  videoLoadingNew = Array(4).fill({ loadState: false, service: new LoadingService() })
   notification: string | null = null;
 
   constructor(private notificationService: NotificationService,
-              private loadingService: LoadingService,
               private httpClient: HttpClient,
               private cdr: ChangeDetectorRef,
               @Inject(DOCUMENT) private document: Document) {}
 
   ngOnInit(): void {
-    // TODO: perform a GET /endpoints to check any existing cameras, in case the UI pod has been restarted
-
     this.notificationService.notifications$.subscribe((payload: Notification) => {
       this.notification = payload.message;
-      setTimeout(() => this.notification = null, 10000); // auto-hide after 10 seconds
+      timer(10000).subscribe(() => this.notification = null) // auto-hide after 10 seconds
     });
+  }
+
+  ngAfterViewInit(): void {
+    // recreate video feeds in case the Web UI pod has been restarted
+    this.httpClient.get<Endpoints>(environment.mediaMtxURL + '/endpoints')
+      .pipe(timeout(5000), retry(3))
+      .pipe(switchMap(endpoints => from(endpoints.items).pipe(
+        // TODO: map endpoint to camera config
+        map(endpoint => new CameraConfig("ID", "source"))
+      )))
+      .subscribe({
+        // next: config => this.addCamera(config),
+        error: err => console.error('Could not fetch endpoints:', err)
+      })
   }
 
   addCamera(cameraConfig: CameraConfig) {
@@ -72,7 +85,7 @@ export class VideoLayoutComponent implements OnInit {
       }
     } else {
       this.notification = "Unsupported stream format";
-      setTimeout(() => this.notification = null, 10000); // auto-hide after 10 seconds
+      timer(10000).subscribe(() => this.notification = null) // auto-hide after 10 seconds
       console.log("Unsupported stream format");
 
       this.videoFeeds[index].active = false;
@@ -91,7 +104,7 @@ export class VideoLayoutComponent implements OnInit {
   private playHlsStream(video: HTMLVideoElement, index: number, streamURL: string): Hls | null {
     if (!Hls.isSupported()) {
       this.notification = "Can't play HLS stream";
-      setTimeout(() => this.notification = null, 10000); // auto-hide after 10 seconds
+      timer(10000).subscribe(() => this.notification = null) // auto-hide after 10 seconds
       console.error("Can't play HLS stream");
       return null;
     }
@@ -126,26 +139,13 @@ export class VideoLayoutComponent implements OnInit {
     hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
 
     this.videosLoading[index] = true;
-    this.loadingService.show();
+    this.videoLoadingNew[index].service.show();
 
     // the HLS manifest file isn't created immediately - poll until it is present
-    this.httpClient.get(streamURL, { observe: 'response', responseType: 'text' })
-      .pipe(
-        retry({
-          count: 10,
-          delay: (err: HttpErrorResponse, retryCount: number) => {
-            if (err.status == 404) {
-              return interval(3000).pipe(take(1));
-            }
-            console.error('Unexpected error while fetching manifest:', err);
-            return throwError(() => err);
-          }
-        })
-      )
-      .subscribe({
+    this.pollHlsManifestUntilPresent(streamURL).subscribe({
         next: () => {
           this.videosLoading[index] = false;
-          this.loadingService.hide();
+          this.videoLoadingNew[index].service.hide();
           hls.loadSource(streamURL);
           hls.attachMedia(video);
         },
@@ -155,6 +155,22 @@ export class VideoLayoutComponent implements OnInit {
         },
       });
     return hls;
+  }
+
+  private pollHlsManifestUntilPresent(url: string): Observable<any> {
+    return this.httpClient.get(url, { observe: 'response', responseType: 'text' })
+      .pipe(
+        retry({
+          count: 10,
+          delay: (err: HttpErrorResponse, retryCount: number) => {
+            if (err.status == 404) {
+              return timer(3000);
+            }
+            console.error('Unexpected error while fetching manifest:', err);
+            return throwError(() => err);
+          }
+        })
+      );
   }
 
   toggleAnonymyzedStreams(anonymization: boolean) {
@@ -179,8 +195,21 @@ export class VideoLayoutComponent implements OnInit {
 
   private changeStream(player: Hls, newUrl: string) {
     player.stopLoad();
-    player.loadSource(newUrl);
-    player.startLoad();
+    // TODO: get index
+    this.videosLoading[0] = true;
+    this.videoLoadingNew[0].service.show();
+    this.pollHlsManifestUntilPresent(newUrl).subscribe({
+      next: () => {
+        this.videosLoading[0] = false;
+        this.videoLoadingNew[0].service.hide();
+        player.loadSource(newUrl);
+        player.startLoad();
+      },
+      error: () => {
+        console.error('Manifest not available after retries.');
+        this.stopStream(0);
+      },
+    });
   }
 
   stopAllStreams() {

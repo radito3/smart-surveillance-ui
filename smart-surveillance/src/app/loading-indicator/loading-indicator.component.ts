@@ -1,5 +1,4 @@
-import { Component } from '@angular/core';
-import { LoadingService } from '../services/loading.service';
+import { Component, Input } from '@angular/core';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { Observable } from 'rxjs';
 import { AsyncPipe, NgIf } from '@angular/common';
@@ -13,10 +12,6 @@ import { AsyncPipe, NgIf } from '@angular/common';
 })
 export class LoadingIndicatorComponent {
 
-  loading$!: Observable<boolean>;
-
-  constructor(private loadingService: LoadingService) {
-    this.loading$ = this.loadingService.loading$;
-  }
+  @Input() loading$!: Observable<boolean>;
 
 }
