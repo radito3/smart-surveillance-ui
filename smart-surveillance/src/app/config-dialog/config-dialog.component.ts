@@ -56,7 +56,7 @@ export class ConfigDialogComponent {
       .pipe(timeout(2000), retry(3))
       .subscribe({
         next: publicKey => this.credsEncryptionKey = publicKey,
-        error: err => console.error('Could not fetch credentials public key:', err)
+        error: err => console.error('Could not fetch credentials public key: ', err)
       });
   }
 
@@ -117,7 +117,7 @@ export class ConfigDialogComponent {
       .subscribe({
         next: () => this.configUpdated.emit(payload),
         error: err => {
-          console.error('Could not send config request:', err);
+          console.error('Could not send config request: ', err);
           this.submitClicked = false;
         }
       });

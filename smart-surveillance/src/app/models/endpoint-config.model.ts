@@ -1,5 +1,12 @@
+export class SourceConfig {
+    constructor(
+        public type: string
+    ) {}
+}
+
 export class EndpointConfig {
     constructor(
-        public source: string
+        public name: string,
+        public source: SourceConfig
     ) {}
 }

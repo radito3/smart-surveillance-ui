@@ -1,42 +1,30 @@
-import { Injectable, NgZone } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { Notification } from '../models/notification.model';
 import { environment } from '../../environments/environment';
+import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 
 @Injectable({
   providedIn: 'root'
 })
 export class NotificationService {
-  private notificationsSubject = new Subject<Notification>();
-  private popupNotificationStream: EventSource | null = null;
 
-  constructor(private zone: NgZone) {}
+  // a second subject is created to allow users of the service to subscribe to
+  // notifications$ before any connection is made
+  private notificationsQueue = new Subject<Notification>();
+  private notificationStream: WebSocketSubject<Notification> | null = null;
 
   public connectToNotificationsChannel() {
-    // FIXME: the SSE stream produces errors - reason: unknown so far
-    const eventSource = new EventSource(environment.notificationServiceURL + '/notifications-stream');
-
-    eventSource.onmessage = (event) => {
-      this.zone.run(() => {
-        this.notificationsSubject.next(event.data);
-      });
-    };
-
-    eventSource.onerror = (error) => {
-      console.error('SSE connection error:', error);
-    };
-
-    this.popupNotificationStream = eventSource;
+    this.notificationStream = webSocket<Notification>(environment.notificationServiceURL + '/notifications-stream');
+    this.notificationStream?.subscribe(message => this.notificationsQueue.next(message));
   }
 
   public disconnectNotificationChannel(): void {
-    if (this.popupNotificationStream !== null) {
-      this.popupNotificationStream.close();
-      this.popupNotificationStream = null;
-    }
+    this.notificationStream?.complete();
+    this.notificationStream = null;
   }
 
   get notifications$(): Observable<Notification> {
-    return this.notificationsSubject.asObservable();
+    return this.notificationsQueue.asObservable();
   }
 }

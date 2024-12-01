@@ -64,7 +64,7 @@ export class AddCameraDialogComponent {
       .subscribe({
         next: () => this.submitCamera.emit(payload),
         error: err => {
-          console.error('Could not create camera:', err);
+          console.error('Could not create camera: ', err);
           this.submitClicked = false;
         }
       });

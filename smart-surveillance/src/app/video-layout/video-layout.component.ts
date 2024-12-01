@@ -1,5 +1,5 @@
-import { Component, OnInit, Inject, ChangeDetectorRef, ViewChildren, QueryList, ElementRef, AfterViewInit } from '@angular/core';
-import { NgFor, NgIf } from '@angular/common';
+import { Component, OnInit, Inject, ViewChildren, QueryList, ElementRef, AfterViewInit } from '@angular/core';
+import { AsyncPipe, NgFor, NgIf } from '@angular/common';
 import { DOCUMENT } from '@angular/common';
 import { ControlsComponent } from "../controls/controls.component";
 import { NotificationService } from '../services/notification.service';
@@ -7,7 +7,7 @@ import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { Notification } from '../models/notification.model';
 import { CameraConfig } from '../models/camera-config.model';
-import { BehaviorSubject, filter, from, map, Observable, range, retry, switchMap, throwError, timeout, timer } from 'rxjs';
+import { BehaviorSubject, from, map, Observable, retry, switchMap, throwError, timeout, timer } from 'rxjs';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import Hls from 'hls.js';
 import * as dashjs from 'dashjs';
@@ -15,11 +15,12 @@ import { environment } from '../../environments/environment';
 import { LoadingIndicatorComponent } from "../loading-indicator/loading-indicator.component";
 import { LoadingService } from '../services/loading.service';
 import { Endpoints } from '../models/endpoints.model';
+import { EndpointConfig } from '../models/endpoint-config.model';
 
 @Component({
   selector: 'app-video-layout',
   standalone: true,
-  imports: [NgIf, NgFor, MatButton, MatIcon, ControlsComponent, LoadingIndicatorComponent],
+  imports: [NgIf, NgFor, MatButton, MatIcon, AsyncPipe, ControlsComponent, LoadingIndicatorComponent],
   templateUrl: './video-layout.component.html',
   styleUrl: './video-layout.component.css'
 })
@@ -27,18 +28,17 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
 
   @ViewChildren('videoElem') videoElements!: QueryList<ElementRef<HTMLVideoElement>>;
 
-  cameraIDs: Array<string> = [];
-  cameraIDsView$ = new BehaviorSubject<string[]>([]);
-  cameraPlayers: Array<Hls | dashjs.MediaPlayerClass | null> = [];
+  cameraIDs$ = new BehaviorSubject<string[]>([]);
+  cameraPlayers: Array<Hls | dashjs.MediaPlayerClass> = [];
 
   videoFeeds = Array(4).fill({ active: false });
-  videosLoading = Array(4).fill(false);
+  videosLoading = Array(4).fill(false); // TODO: delet dis
   videoLoadingNew = Array(4).fill({ loadState: false, service: new LoadingService() })
   notification: string | null = null;
 
   constructor(private notificationService: NotificationService,
               private httpClient: HttpClient,
-              private cdr: ChangeDetectorRef,
+              // private cdr: ChangeDetectorRef,
               @Inject(DOCUMENT) private document: Document) {}
 
   ngOnInit(): void {
@@ -53,45 +53,61 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
     this.httpClient.get<Endpoints>(environment.mediaMtxURL + '/endpoints')
       .pipe(timeout(5000), retry(3))
       .pipe(switchMap(endpoints => from(endpoints.items).pipe(
-        // TODO: map endpoint to camera config
-        map(endpoint => new CameraConfig("ID", "source"))
+        map(endpoint => this.mapEndpointToCameraConfig(endpoint))
       )))
       .subscribe({
-        // next: config => this.addCamera(config),
-        error: err => console.error('Could not fetch endpoints:', err)
+        next: config => this.addCamera(config),
+        error: err => console.error('Could not fetch endpoints: ', err)
       })
   }
 
-  addCamera(cameraConfig: CameraConfig) {
-    this.cameraIDs.push(cameraConfig.ID);
-    this.cameraIDsView$.next(this.cameraIDs);
-    this.cdr.detectChanges();
-
-    const index = this.cameraIDs.length - 1;
-    this.videoFeeds[index].active = true;
-    const videoElem = this.videoElements.toArray()[index].nativeElement;
-    this.startStream(videoElem, index, cameraConfig.source, "camera-" + cameraConfig.ID);
+  private mapEndpointToCameraConfig(endpoint: EndpointConfig) {
+    // for future dev: if the endpoint is not RTSP/RTMP, we don't know the source URL as MediaMTX does not return it
+    const mediaMtxHost = environment.mediaMtxURL.substring('http'.length);
+    const source = endpoint.source.type.substring(0, 5) + mediaMtxHost + '/' + endpoint.name;
+    const ID = endpoint.name.replace('camera-', '');
+    return new CameraConfig(ID, source);
   }
 
-  startStream(videoElem: HTMLVideoElement, index: number, source: string, path: string) {
-    if (source.startsWith("rtsp") || source.startsWith("rtmp")) {
-      source = environment.mediaMtxURL + '/static/' + path + ".m3u8"
-    }
-    if (source.startsWith("http")) {
-      if (source.endsWith("m3u8")) {
-        this.cameraPlayers.push(this.playHlsStream(videoElem, index, source))
-      } else {
-        this.cameraPlayers.push(this.playDashStream(videoElem, source));
-      }
-    } else {
-      this.notification = "Unsupported stream format";
-      timer(10000).subscribe(() => this.notification = null) // auto-hide after 10 seconds
-      console.log("Unsupported stream format");
+  addCamera(cameraConfig: CameraConfig) {
+    this.cameraIDs$.next([...this.cameraIDs$.value, cameraConfig.ID]);
 
+    const index = this.cameraIDs$.value.length - 1;
+    this.videoFeeds[index].active = true;
+    const videoElem = this.videoElements.toArray()[index].nativeElement;
+
+    const player = this.startStream(videoElem, index, cameraConfig.source, "camera-" + cameraConfig.ID);
+    if (player !== null) {
+      this.cameraPlayers.push(player);
+    } else {
       this.videoFeeds[index].active = false;
-      this.cameraIDs.splice(index, 1);
-      this.cameraIDsView$.next(this.cameraIDs);
-      this.cdr.detectChanges();
+      this.cameraIDs$.next(this.cameraIDs$.value.filter((val, idx) => idx != index));
+    }
+  }
+
+  startStream(video: HTMLVideoElement, index: number, source: string, path: string): Hls | dashjs.MediaPlayerClass | null {
+    if (source.startsWith("rtsp") || source.startsWith("rtmp")) {
+      source = environment.mediaMtxURL + '/static/' + path + ".m3u8";
+    }
+
+    if (!source.startsWith("http")) {
+      this.notification = "Unsupported stream format";
+      timer(10000).subscribe(() => this.notification = null);
+      console.error("Unsupported stream format");
+      return null;
+    }
+
+    if (source.endsWith("m3u8")) {
+      const player = this.playHlsStream(video, index, source);
+      if (player === null) {
+        this.notification = "Can't play HLS stream";
+        timer(10000).subscribe(() => this.notification = null);
+        console.error("Can't play HLS stream");
+        return null;
+      }
+      return player;
+    } else {
+      return this.playDashStream(video, source);
     }
   }
 
@@ -103,9 +119,6 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
 
   private playHlsStream(video: HTMLVideoElement, index: number, streamURL: string): Hls | null {
     if (!Hls.isSupported()) {
-      this.notification = "Can't play HLS stream";
-      timer(10000).subscribe(() => this.notification = null) // auto-hide after 10 seconds
-      console.error("Can't play HLS stream");
       return null;
     }
 
@@ -117,18 +130,18 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
     });
 
     hls.on(Hls.Events.ERROR, (event, data) => {
-      console.log('error: ', data)
+      console.log('hls error: ', data)
       if (data.fatal) {
         switch (data.type) {
           case Hls.ErrorTypes.MEDIA_ERROR:
-            console.log('fatal media error encountered, try to recover');
+            console.log('fatal media error encountered, trying to recover');
             hls.recoverMediaError();
             break;
           case Hls.ErrorTypes.NETWORK_ERROR:
-            console.error('fatal network error encountered:', data);
+            console.error('fatal network error encountered: ', data);
             break;
           default:
-            // cannot recover
+            console.log('cannot recover hls error. stopping stream ' + index)
             hls.destroy();
             this.stopStream(index);
             break;
@@ -166,7 +179,7 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
             if (err.status == 404) {
               return timer(3000);
             }
-            console.error('Unexpected error while fetching manifest:', err);
+            console.error('Unexpected error while fetching manifest: ', err);
             return throwError(() => err);
           }
         })
@@ -174,64 +187,49 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
   }
 
   toggleAnonymyzedStreams(anonymization: boolean) {
-    from(this.cameraPlayers)
-      .pipe(
-        filter(player => player !== null),
-        map((value, index) => ({ index, value }))
-      )
-      .forEach(tuple => {
-        const idx = tuple.index;
-        const player = tuple.value;
-
-        if (player instanceof Hls) {
-          const streamPath = anonymization ? 'anon-camera-' : 'camera-' + this.cameraIDs[idx]
-          this.changeStream(player, environment.mediaMtxURL + '/static/' + streamPath)
-        } else {
-          // for future dev: handle DASH players...
-          console.log("Anonymizing MPEG-DASH streams not yet implemented");
-        }
-      });
+    for (let i = 0; i < this.cameraPlayers.length; i++) {
+      const player = this.cameraPlayers[i];
+      if (player instanceof Hls) {
+        const streamPath = anonymization ? 'anon-camera-' : 'camera-' + this.cameraIDs$.value[i]
+        this.changeStream(i, player, environment.mediaMtxURL + '/static/' + streamPath)
+      } else {
+        // for future dev: handle DASH players...
+        console.log("Anonymizing MPEG-DASH streams not yet implemented");
+      }
+    }
   }
 
-  private changeStream(player: Hls, newUrl: string) {
+  private changeStream(index: number, player: Hls, newUrl: string) {
     player.stopLoad();
-    // TODO: get index
-    this.videosLoading[0] = true;
-    this.videoLoadingNew[0].service.show();
+    this.videosLoading[index] = true;
+    this.videoLoadingNew[index].service.show();
+
     this.pollHlsManifestUntilPresent(newUrl).subscribe({
       next: () => {
-        this.videosLoading[0] = false;
-        this.videoLoadingNew[0].service.hide();
+        this.videosLoading[index] = false;
+        this.videoLoadingNew[index].service.hide();
         player.loadSource(newUrl);
         player.startLoad();
       },
       error: () => {
         console.error('Manifest not available after retries.');
-        this.stopStream(0);
+        this.stopStream(index);
       },
     });
   }
 
   stopAllStreams() {
-    const numCameras = this.cameraIDs.length;
-    range(0, numCameras).forEach(() => this.stopStream(0));
+    const numCameras = this.cameraIDs$.value.length;
+    for (let i = 0; i < numCameras; i++) {
+      this.stopStream(0);
+    }
   }
 
   stopStream(index: number) {
     this.videoFeeds[index].active = false;
-    const player: Hls | dashjs.MediaPlayerClass | null = this.cameraPlayers[index];
-
-    if (player === null) {
-      const videoElem = this.document.getElementById('video'+ index) as HTMLVideoElement;
-      videoElem.src = '';
-    } else {
-      player.destroy();
-    }
-
+    this.cameraPlayers[index].destroy();
     this.cameraPlayers.splice(index, 1);
-    this.cameraIDs.splice(index, 1);
-    this.cameraIDsView$.next(this.cameraIDs);
-    this.cdr.detectChanges();
+    this.cameraIDs$.next(this.cameraIDs$.value.filter((val, idx) => idx != index));
   }
 
 }

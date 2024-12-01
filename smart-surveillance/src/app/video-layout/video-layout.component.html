@@ -11,12 +11,12 @@
     <video #videoElem [attr.id]="'video-' + i" muted></video>
   </div>
 
-  <div *ngIf="cameraIDs.length == 0" class="no-cameras">
+  <div *ngIf="cameraIDs$.value.length == 0" class="no-cameras">
     <p>No Cameras connected</p>
   </div>
 
   <app-controls
-    [cameraIDs$]="cameraIDsView$.asObservable()"
+    [cameraIDs]="cameraIDs$ | async"
     (cameraAdded)="addCamera($event)"
     (anonymizationToggled)="toggleAnonymyzedStreams($event)"
     (camerasClosed)="stopAllStreams()" />

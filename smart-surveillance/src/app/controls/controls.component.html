@@ -1,6 +1,5 @@
 <div class="right-buttons-container">
   <div class="analytics-button-container">
-    <!-- this will start analysis for all present cameras -->
     <button
       mat-mini-fab
       color="accent"
@@ -19,7 +18,7 @@
       mat-mini-fab
       color="accent"
       class="play-recording-button"
-      disabled="true"
+      [disabled]="true"
     >
       <!-- maybe have a popup tooltip: "Recoding is currently unsupported" -->
       <mat-icon>play_arrow</mat-icon>
@@ -35,7 +34,7 @@
       mat-mini-fab
       color="accent"
       class="recording-button"
-      disabled="true"
+      [disabled]="true"
     >
       <mat-icon>fiber_smart_record</mat-icon>
       <span class="recording-tooltip tooltip tooltip-left">Start recording</span>
@@ -43,7 +42,6 @@
   </div>
 
   <div class="anonymyze-button-container">
-    <!-- this will destroy current players, and connect to the new /anon-{path} endpoints -->
     <button
       mat-mini-fab
       color="accent"
@@ -68,7 +66,7 @@
   </div>
 </div>
 
-<div class="close-button-container" *ngIf="cameraIDs.length != 0">
+<div class="close-button-container" *ngIf="cameraIDs?.length != 0">
   <button
     mat-raised-button
     color="accent"
