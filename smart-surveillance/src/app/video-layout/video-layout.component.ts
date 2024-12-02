@@ -7,7 +7,7 @@ import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { Notification } from '../models/notification.model';
 import { CameraConfig } from '../models/camera-config.model';
-import { BehaviorSubject, from, map, Observable, retry, switchMap, throwError, timeout, timer } from 'rxjs';
+import { BehaviorSubject, filter, from, map, Observable, retry, switchMap, throwError, timeout, timer } from 'rxjs';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import Hls from 'hls.js';
 import * as dashjs from 'dashjs';
@@ -31,28 +31,32 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
   cameraIDs$ = new BehaviorSubject<string[]>([]);
   cameraPlayers: Array<Hls | dashjs.MediaPlayerClass> = [];
 
-  videoFeeds = Array(4).fill({ active: false });
-  videosLoading = Array(4).fill(false); // TODO: delet dis
-  videoLoadingNew = Array(4).fill({ loadState: false, service: new LoadingService() })
+  videoFeeds = Array(4).fill(null).map(() => ({ active: false, loading: new LoadingService() }));
   notification: string | null = null;
 
   constructor(private notificationService: NotificationService,
               private httpClient: HttpClient,
-              // private cdr: ChangeDetectorRef,
               @Inject(DOCUMENT) private document: Document) {}
 
   ngOnInit(): void {
     this.notificationService.notifications$.subscribe((payload: Notification) => {
       this.notification = payload.message;
-      timer(10000).subscribe(() => this.notification = null) // auto-hide after 10 seconds
+      const cameraIndex = this.cameraIDs$.value.indexOf(payload.cameraID);
+      this.videoElements.toArray()[cameraIndex].nativeElement.style.setProperty('border', '8px solid red');
+      // auto-hide after 10 seconds
+      timer(10000).subscribe(() => {
+        this.notification = null;
+        this.videoElements.toArray()[cameraIndex].nativeElement.style.removeProperty('border');
+      });
     });
   }
 
   ngAfterViewInit(): void {
     // recreate video feeds in case the Web UI pod has been restarted
     this.httpClient.get<Endpoints>(environment.mediaMtxURL + '/endpoints')
-      .pipe(timeout(5000), retry(3))
+      .pipe(timeout(5000), retry({ count: 3, delay: 2000 }))
       .pipe(switchMap(endpoints => from(endpoints.items).pipe(
+        // filter(endpoint => endpoint.name != 'origin'),
         map(endpoint => this.mapEndpointToCameraConfig(endpoint))
       )))
       .subscribe({
@@ -151,14 +155,12 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
 
     hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
 
-    this.videosLoading[index] = true;
-    this.videoLoadingNew[index].service.show();
+    this.videoFeeds[index].loading.show();
 
     // the HLS manifest file isn't created immediately - poll until it is present
     this.pollHlsManifestUntilPresent(streamURL).subscribe({
         next: () => {
-          this.videosLoading[index] = false;
-          this.videoLoadingNew[index].service.hide();
+          this.videoFeeds[index].loading.hide();
           hls.loadSource(streamURL);
           hls.attachMedia(video);
         },
@@ -201,13 +203,11 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
 
   private changeStream(index: number, player: Hls, newUrl: string) {
     player.stopLoad();
-    this.videosLoading[index] = true;
-    this.videoLoadingNew[index].service.show();
+    this.videoFeeds[index].loading.show();
 
     this.pollHlsManifestUntilPresent(newUrl).subscribe({
       next: () => {
-        this.videosLoading[index] = false;
-        this.videoLoadingNew[index].service.hide();
+        this.videoFeeds[index].loading.hide();
         player.loadSource(newUrl);
         player.startLoad();
       },

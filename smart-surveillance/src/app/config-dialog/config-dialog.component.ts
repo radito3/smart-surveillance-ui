@@ -53,7 +53,7 @@ export class ConfigDialogComponent {
     })
 
     this.httpClient.get('/config/public_key.pem', { responseType: 'text' })
-      .pipe(timeout(2000), retry(3))
+      .pipe(timeout(2000), retry({ count: 3, delay: 2000 }))
       .subscribe({
         next: publicKey => this.credsEncryptionKey = publicKey,
         error: err => console.error('Could not fetch credentials public key: ', err)

@@ -12,17 +12,36 @@
   display: none;
 }
 
-/* No Cameras */
 .no-cameras {
   text-align: center;
   font-size: 24px;
   color: white;
 }
 
-/* Single Camera - Takes 80% of the screen */
+.notification {
+  /* text-align: center; */
+  height: 10%;
+  display: inline;
+  align-items: flex-start;
+  justify-content: center;
+  /* margin-top: -6rem; */
+  font-size: 24px;
+  color: white;
+  /* padding-bottom: 20vh; */
+}
+
+.notification p {
+  margin-top: 5vh;
+}
+
+/* Single Camera */
 video {
-  width: 80%;
-  height: 80%;
+  width: auto;
+  height: 70%;
+  border-radius: 1rem;
+  overflow: hidden;
+  /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); */
+  aspect-ratio: 16/9;
   align-self: center;
 }
 

@@ -1,6 +1,5 @@
 .loading-overlay {
     position: relative;
-    /* FIXME: it's not quite in the center (both horizontally and vertically) of the video div element */
     /* top: 0; */
     /* left: 0; */
     /* width: 100%; */

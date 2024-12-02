@@ -103,7 +103,7 @@ export class ControlsComponent implements OnInit, OnChanges {
     return this.httpClient.delete(environment.mediaMtxURL + path, { responseType: 'text' })
       .pipe(
         timeout(5000),
-        retry(3),
+        retry({ count: 3, delay: 2000 }),
         catchError(err => this.handleNotFound(err, path)),
       );
   }

@@ -12,6 +12,6 @@ import { AsyncPipe, NgIf } from '@angular/common';
 })
 export class LoadingIndicatorComponent {
 
-  @Input() loading$!: Observable<boolean>;
+  @Input() toggle$!: Observable<boolean>;
 
 }

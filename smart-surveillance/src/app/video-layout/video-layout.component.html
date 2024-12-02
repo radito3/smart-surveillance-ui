@@ -1,13 +1,12 @@
 <div class="video-container">
 
   <!-- TODO: change css class -> text needs to be on the top of the screen, not in the vertical center -->
-  <div *ngIf="notification" class="no-cameras">
+  <div *ngIf="cameraIDs$.value.length != 0 && notification" class="notification">
     <p>{{ notification }}</p>
   </div>
 
   <div *ngFor="let client of videoFeeds; let i = index" [class.hidden]="!client.active">
-    <!-- FIXME: these are still not independent -->
-    <app-loading-indicator *ngIf="videosLoading[i]" [loading$]="videoLoadingNew[i].service.loading$"></app-loading-indicator>
+    <app-loading-indicator [toggle$]="client.loading.toggle$"></app-loading-indicator>
     <video #videoElem [attr.id]="'video-' + i" muted></video>
   </div>
 

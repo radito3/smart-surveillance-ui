@@ -16,7 +16,7 @@ export class LoadingService {
         this.loadingSubject.next(false);
     }
 
-    get loading$(): Observable<boolean> {
+    get toggle$(): Observable<boolean> {
         return this.loadingSubject.asObservable();
     }
 }
