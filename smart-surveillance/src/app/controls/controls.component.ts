@@ -42,7 +42,7 @@ export class ControlsComponent implements OnInit, OnChanges {
 
   ngOnInit(): void {
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-    this.httpClient.post(environment.notificationServiceURL + '/config', {config: [new Config()]}, { headers: headers })
+    this.httpClient.post(environment.notificationServiceURL + '/config', {config: [new Config()]}, { headers: headers, responseType: 'text' })
       .pipe(
         catchError(err => this.handleConflict(err, '/config')),
         timeout(5000)
@@ -172,7 +172,7 @@ export class ControlsComponent implements OnInit, OnChanges {
 
   private makeAnalysisCall(ID: string, shouldAnalyse: boolean): Observable<any> {
     if (shouldAnalyse) {
-      return this.httpClient.post(environment.mediaMtxURL + '/analysis/' + ID + '?analysisMode=' + this.analysisMode, null)
+      return this.httpClient.post(environment.mediaMtxURL + '/analysis/' + ID + '?analysisMode=' + this.analysisMode, null, { responseType: 'text' })
         .pipe(
           catchError(err => this.handleConflict(err, '/analysis/' + ID)),
           timeout(5000)
@@ -184,7 +184,7 @@ export class ControlsComponent implements OnInit, OnChanges {
   toggleAnonymisation() {
     from(Array.from(this.cameraConfigs.keys()))
       .pipe(
-        mergeMap(ID => this.httpClient.post(environment.mediaMtxURL + '/anonymyze/camera-' + ID, null)
+        mergeMap(ID => this.httpClient.post(environment.mediaMtxURL + '/anonymyze/camera-' + ID, null, { responseType: 'text' })
           .pipe(
             catchError(err => this.handleConflict(err, '/anonymyze/camera-' + ID)),
             timeout(5000)

@@ -9,13 +9,12 @@
 }
 
 .right-buttons-container {
-  /* position: relative; */
-  position: fixed; /* Keeps the container in a fixed position relative to the viewport */
-  bottom: 2rem;    /* Distance from the bottom of the screen */
-  right: 2rem;     /* Distance from the right side of the screen */
-  display: flex;   /* Flexbox to align buttons */
+  position: fixed;        /* Keeps the container in a fixed position relative to the viewport */
+  bottom: 2rem;           /* Distance from the bottom of the screen */
+  right: 2rem;            /* Distance from the right side of the screen */
+  display: flex;          /* Flexbox to align buttons */
   flex-direction: column; /* Stack buttons vertically */
-  gap: 1rem;       /* Add spacing between buttons */
+  gap: 1rem;              /* Add spacing between buttons */
 }
 
 .config-button-container {
@@ -37,7 +36,7 @@
   /* color: #050404; */
   color: white;
   padding: 0.5rem;           /* Spacing inside the tooltip */
-  border-radius: 0.3rem;     /* Rounded corners for the tooltip */
+  /* border-radius: 0.3rem;   /*  Rounded corners for the tooltip */
   font-size: 1rem;
   white-space: nowrap;       /* Prevent tooltip text from wrapping */
 }
@@ -45,15 +44,15 @@
 /* Tooltip for left-aligned buttons */
 .tooltip-right {
   left: 100%;          /* Position the tooltip to the right of the button */
-  bottom: -1.22rem;    /* Center vertically relative to the button */
+  bottom: -1.1rem;     /* Center vertically relative to the button */
   margin-left: 0.5rem; /* Space between the button and tooltip */
 }
 
 /* Tooltip for right-aligned buttons */
 .tooltip-left {
-  right: 100%;        /* Position the tooltip to the left of the button */
-  bottom: -1.05rem;   /* Center vertically relative to the button */
-  margin-right: 2rem; /* Space between the button and tooltip */
+  right: 100%;          /* Position the tooltip to the left of the button */
+  bottom: -1rem;        /* Center vertically relative to the button */
+  margin-right: 2.5rem; /* Space between the button and tooltip */
 }
 
 .add-camera-tooltip {

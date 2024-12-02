@@ -1,12 +1,14 @@
-<div class="video-container">
-
-  <div *ngFor="let client of videoFeeds; let i = index" [class.hidden]="!client.active">
-    <app-loading-indicator [toggle$]="client.loading.toggle$"></app-loading-indicator>
-    <video #videoElem [attr.id]="'video-' + i" muted></video>
-  </div>
+<div class="video-container-root">
 
   <div *ngIf="cameraIDs$.value.length == 0" class="no-cameras">
     <p>No Cameras connected</p>
+  </div>
+
+  <div id="video-container" [style.display]="cameraIDs$.value.length == 0 ? 'none' : 'grid'">
+    <ng-container *ngFor="let client of videoFeeds; let i = index">
+      <app-loading-indicator [toggle$]="client.loading.toggle$"></app-loading-indicator>
+      <video #videoElem [class.hidden]="!client.active" [attr.id]="'video-' + i" muted></video>
+    </ng-container>
   </div>
 
   <app-controls

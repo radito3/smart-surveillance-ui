@@ -1,11 +1,10 @@
-.video-container {
+.video-container-root {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   height: 100vh;
   width: 100vw;
-  position: relative;
 }
 
 .hidden {
@@ -13,61 +12,84 @@
 }
 
 .no-cameras {
-  text-align: center;
+  align-self: center;
   font-size: 24px;
+  margin-left: auto;
+  margin-right: auto;
   color: white;
 }
 
-/* Single Camera */
+#video-container {
+  display: grid;
+  justify-content: center;
+  align-items: center;
+  /* position: relative; */
+  gap: 25px;
+  width: 90%;
+  height: 90%;
+}
+
 video {
-  width: auto;
-  height: 70%;
+  /* width: 80%; */
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16/9;
   border-radius: 1rem;
   overflow: hidden;
-  /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); */
-  aspect-ratio: 16/9;
-  align-self: center;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+#video-container.one video {
+  /* margin-top: auto; */
+  margin-left: auto;
+  margin-right: auto;
+  width: 90%;
 }
 
 /* Two Cameras - 45% width each, side by side */
-.two-cameras {
-  display: flex;
-  justify-content: space-around;
+#video-container.two {
+  display: flex !important;
+  /* justify-content: space-around; */
+  justify-content: center;
+  gap: 22px;
   width: 100%;
   height: 80%;
 }
-.two-cameras video {
+#video-container.two video {
   width: 45%;
   height: auto;
 }
 
 /* Three Cameras - Two on top, one below */
-.three-cameras {
-  display: flex;
+#video-container.three {
+  display: flex !important;
   flex-wrap: wrap;
-  justify-content: space-around;
+  justify-content: center;
+  gap: 22px;
   width: 100%;
-  height: 80%;
+  /* height: 80%; */
 }
-.three-cameras video {
+#video-container.three video {
   width: 45%;
   height: auto;
 }
-.three-cameras video:nth-child(3) {
-  width: 90%;
-  margin-top: 10px;
+#video-container.three video:nth-child(3) {
+  width: 45%;
 }
 
 /* Four Cameras - 2x2 Grid */
-.four-cameras {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  gap: 10px;
-  width: 100%;
-  height: 80%;
+/* FIXME: this is bugged - the fractions appear very small and the video players are squished */
+#video-container.four {
+  display: grid !important;
+  /* grid-template-columns: 1fr 1fr; */
+  grid-template-columns: repeat(2, 1fr);
+  /* grid-template-rows: 1fr 1fr; */
+  grid-template-rows: repeat(2, 1fr);
+  gap: 22px;
+  width: 90%;
+  /* height: 80%; */
 }
-.four-cameras video {
+#video-container.four video {
   width: 100%;
   height: auto;
 }

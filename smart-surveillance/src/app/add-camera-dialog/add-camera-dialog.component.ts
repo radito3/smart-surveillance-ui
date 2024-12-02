@@ -59,7 +59,7 @@ export class AddCameraDialogComponent {
     );
 
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-    this.httpClient.post(environment.mediaMtxURL + '/endpoints', payload, { headers: headers })
+    this.httpClient.post(environment.mediaMtxURL + '/endpoints', payload, { headers: headers, responseType: 'text' })
       .pipe(timeout(5000))
       .subscribe({
         next: () => this.submitCamera.emit(payload),

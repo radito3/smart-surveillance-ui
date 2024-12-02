@@ -89,6 +89,28 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
   addCamera(cameraConfig: CameraConfig) {
     this.cameraIDs$.next([...this.cameraIDs$.value, cameraConfig.ID]);
 
+    const container = this.document.getElementById('video-container') as HTMLDivElement;
+    container.className = '';
+
+    // FIXME
+    switch (this.cameraIDs$.value.length) {
+      case 1:
+        container.classList.add('one');
+        break;
+      case 2:
+        container.classList.remove('one');
+        container.classList.add('two');
+        break;
+      case 3:
+        container.classList.remove('two');
+        container.classList.add('three');
+        break;
+      case 4:
+        container.classList.remove('three');
+        container.classList.add('four');
+        break;
+    }
+
     const index = this.cameraIDs$.value.length - 1;
     this.videoFeeds[index].active = true;
     const videoElem = this.videoElements.toArray()[index].nativeElement;
@@ -171,7 +193,6 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
     // the HLS manifest file isn't created immediately - poll until it is present
     this.pollHlsManifestUntilPresent(streamURL).subscribe({
         next: () => {
-          this.videoFeeds[index].loading.hide();
           hls.loadSource(streamURL);
           hls.attachMedia(video);
         },
@@ -179,6 +200,7 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
           console.error('Manifest not available after retries.');
           this.stopStream(index);
         },
+        complete: () => this.videoFeeds[index].loading.hide()
       });
     return hls;
   }
@@ -218,7 +240,6 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
 
     this.pollHlsManifestUntilPresent(newUrl).subscribe({
       next: () => {
-        this.videoFeeds[index].loading.hide();
         player.loadSource(newUrl);
         player.startLoad();
       },
@@ -226,6 +247,7 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
         console.error('Manifest not available after retries.');
         this.stopStream(index);
       },
+      complete: () => this.videoFeeds[index].loading.hide()
     });
   }
 
@@ -234,9 +256,12 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
     for (let i = 0; i < numCameras; i++) {
       this.stopStream(0);
     }
+    const container = this.document.getElementById('video-container') as HTMLDivElement;
+    container.className = '';
   }
 
   stopStream(index: number) {
+    // TODO: decrement video wrapper css style
     this.videoFeeds[index].active = false;
     this.cameraPlayers[index].destroy();
     this.cameraPlayers.splice(index, 1);
