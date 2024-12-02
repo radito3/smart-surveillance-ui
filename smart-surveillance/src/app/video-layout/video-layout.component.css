@@ -18,22 +18,6 @@
   color: white;
 }
 
-.notification {
-  /* text-align: center; */
-  height: 10%;
-  display: inline;
-  align-items: flex-start;
-  justify-content: center;
-  /* margin-top: -6rem; */
-  font-size: 24px;
-  color: white;
-  /* padding-bottom: 20vh; */
-}
-
-.notification p {
-  margin-top: 5vh;
-}
-
 /* Single Camera */
 video {
   width: auto;

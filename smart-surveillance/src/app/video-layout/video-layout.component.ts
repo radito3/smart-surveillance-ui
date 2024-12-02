@@ -7,7 +7,7 @@ import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { Notification } from '../models/notification.model';
 import { CameraConfig } from '../models/camera-config.model';
-import { BehaviorSubject, filter, from, map, Observable, retry, switchMap, throwError, timeout, timer } from 'rxjs';
+import { BehaviorSubject, delay, filter, from, map, Observable, retry, switchMap, throwError, timeout, timer } from 'rxjs';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import Hls from 'hls.js';
 import * as dashjs from 'dashjs';
@@ -16,6 +16,7 @@ import { LoadingIndicatorComponent } from "../loading-indicator/loading-indicato
 import { LoadingService } from '../services/loading.service';
 import { Endpoints } from '../models/endpoints.model';
 import { EndpointConfig } from '../models/endpoint-config.model';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-video-layout',
@@ -32,23 +33,35 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
   cameraPlayers: Array<Hls | dashjs.MediaPlayerClass> = [];
 
   videoFeeds = Array(4).fill(null).map(() => ({ active: false, loading: new LoadingService() }));
-  notification: string | null = null;
 
   constructor(private notificationService: NotificationService,
               private httpClient: HttpClient,
+              private snackBar: MatSnackBar,
               @Inject(DOCUMENT) private document: Document) {}
 
   ngOnInit(): void {
-    this.notificationService.notifications$.subscribe((payload: Notification) => {
-      this.notification = payload.message;
-      const cameraIndex = this.cameraIDs$.value.indexOf(payload.cameraID);
+    this.notificationService.notifications$
+      .subscribe((payload: Notification) => this.displayNotification(payload.message, payload.cameraID));
+  }
+
+  private displayNotification(message: string, cameraID?: string) {
+    let cameraIndex: number = -1;
+    if (cameraID) {
+      cameraIndex = this.cameraIDs$.value.indexOf(cameraID);
       this.videoElements.toArray()[cameraIndex].nativeElement.style.setProperty('border', '8px solid red');
-      // auto-hide after 10 seconds
-      timer(10000).subscribe(() => {
-        this.notification = null;
-        this.videoElements.toArray()[cameraIndex].nativeElement.style.removeProperty('border');
-      });
+    }
+
+    const snackBarRef = this.snackBar.open(message, 'Dismiss', {
+      verticalPosition: 'top',
+      horizontalPosition: 'center',
+      panelClass: cameraID ? ['notification-snackbar', 'notification-alert'] : 'notification-snackbar'
     });
+
+    if (cameraID) {
+      snackBarRef.afterDismissed()
+        .pipe(delay(5000))
+        .subscribe(() => this.videoElements.toArray()[cameraIndex].nativeElement.style.removeProperty('border'));
+    }
   }
 
   ngAfterViewInit(): void {
@@ -95,18 +108,16 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
     }
 
     if (!source.startsWith("http")) {
-      this.notification = "Unsupported stream format";
-      timer(10000).subscribe(() => this.notification = null);
-      console.error("Unsupported stream format");
+      console.error("Unsupported stream format for " + source);
+      this.displayNotification("Unsupported stream format");
       return null;
     }
 
     if (source.endsWith("m3u8")) {
       const player = this.playHlsStream(video, index, source);
       if (player === null) {
-        this.notification = "Can't play HLS stream";
-        timer(10000).subscribe(() => this.notification = null);
-        console.error("Can't play HLS stream");
+        console.error("Can't play HLS stream " + source);
+        this.displayNotification("Can't play HLS stream");
         return null;
       }
       return player;
