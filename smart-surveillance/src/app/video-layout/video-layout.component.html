@@ -4,13 +4,18 @@
     <p>No Cameras connected</p>
   </div>
 
-  <div id="video-container" [style.display]="cameraIDs$.value.length == 0 ? 'none' : 'grid'">
+  <div id="video-container" [class.hidden]="cameraIDs$.value.length == 0">
     <ng-container *ngFor="let client of videoFeeds; let i = index">
       <app-loading-indicator
-        [style.display]="!client.loading ? 'none' : 'block'"
+        [class.hidden]="!client.loading"
         [toggle$]="client.indicator.toggle$">
       </app-loading-indicator>
-      <video #videoElem [class.hidden]="!client.active" [attr.id]="'video-' + i" muted></video>
+      <video
+        #videoElem
+        [attr.id]="'video-' + i"
+        [class.hidden]="!client.active"
+        muted>
+      </video>
     </ng-container>
   </div>
 

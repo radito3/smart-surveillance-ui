@@ -69,7 +69,7 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
     this.httpClient.get<Endpoints>(environment.mediaMtxURL + '/endpoints')
       .pipe(timeout(5000), retry({ count: 3, delay: 2000 }))
       .pipe(switchMap(endpoints => from(endpoints.items).pipe(
-        // filter(endpoint => endpoint.name != 'origin'),
+        filter(endpoint => endpoint.name != 'origin'),
         map(endpoint => this.mapEndpointToCameraConfig(endpoint))
       )))
       .subscribe({
@@ -90,7 +90,7 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
     this.cameraIDs$.next([...this.cameraIDs$.value, cameraConfig.ID]);
 
     const container = this.document.getElementById('video-container') as HTMLDivElement;
-    container.className = '';
+    // container.className = '';
 
     // FIXME
     switch (this.cameraIDs$.value.length) {

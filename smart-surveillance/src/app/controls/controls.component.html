@@ -58,7 +58,7 @@
       mat-fab
       class="add-camera-button"
       (click)="openAddCameraDialog()"
-      [disabled]="cameraConfigs.size >= 4"
+      [disabled]="cameraIDs?.length! >= 4"
     >
       <mat-icon>add</mat-icon>
       <span class="add-camera-tooltip tooltip tooltip-left">Connect camera</span>

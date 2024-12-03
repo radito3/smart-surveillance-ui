@@ -1,11 +1,9 @@
 .loading-overlay {
     position: relative;
     display: flex;
-    /* top: 0; */
-    left: 33%;
     /* width: 100%; */
     /* height: 100%; */
-    justify-self: center;
-    align-items: center;
+    justify-content: center;
+    /* align-items: center; */
     /* z-index: 1000; */
 }
