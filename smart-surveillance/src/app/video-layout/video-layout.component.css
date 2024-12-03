@@ -78,13 +78,10 @@ video {
 }
 
 /* Four Cameras - 2x2 Grid */
-/* FIXME: this is bugged - the fractions appear very small and the video players are squished */
 #video-container.four {
   display: grid !important;
-  /* grid-template-columns: 1fr 1fr; */
-  grid-template-columns: repeat(2, 1fr);
-  /* grid-template-rows: 1fr 1fr; */
-  grid-template-rows: repeat(2, 1fr);
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
   gap: 22px;
   width: 90%;
   /* height: 80%; */

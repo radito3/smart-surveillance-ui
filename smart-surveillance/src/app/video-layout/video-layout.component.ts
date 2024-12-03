@@ -32,7 +32,7 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
   cameraIDs$ = new BehaviorSubject<string[]>([]);
   cameraPlayers: Array<Hls | dashjs.MediaPlayerClass> = [];
 
-  videoFeeds = Array(4).fill(null).map(() => ({ active: false, loading: new LoadingService() }));
+  videoFeeds = Array(4).fill(null).map(() => ({ active: false, loading: false, indicator: new LoadingService() }));
 
   constructor(private notificationService: NotificationService,
               private httpClient: HttpClient,
@@ -188,7 +188,8 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
 
     hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
 
-    this.videoFeeds[index].loading.show();
+    this.videoFeeds[index].loading = true;
+    this.videoFeeds[index].indicator.show();
 
     // the HLS manifest file isn't created immediately - poll until it is present
     this.pollHlsManifestUntilPresent(streamURL).subscribe({
@@ -200,7 +201,10 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
           console.error('Manifest not available after retries.');
           this.stopStream(index);
         },
-        complete: () => this.videoFeeds[index].loading.hide()
+        complete: () => {
+          this.videoFeeds[index].loading = false;
+          this.videoFeeds[index].indicator.hide();
+        }
       });
     return hls;
   }
@@ -236,7 +240,8 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
 
   private changeStream(index: number, player: Hls, newUrl: string) {
     player.stopLoad();
-    this.videoFeeds[index].loading.show();
+    this.videoFeeds[index].loading = true;
+    this.videoFeeds[index].indicator.show();
 
     this.pollHlsManifestUntilPresent(newUrl).subscribe({
       next: () => {
@@ -247,7 +252,10 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
         console.error('Manifest not available after retries.');
         this.stopStream(index);
       },
-      complete: () => this.videoFeeds[index].loading.hide()
+      complete: () => {
+        this.videoFeeds[index].loading = false;
+        this.videoFeeds[index].indicator.hide();
+      }
     });
   }
 
