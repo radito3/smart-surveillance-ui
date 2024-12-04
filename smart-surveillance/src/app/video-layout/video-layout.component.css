@@ -20,10 +20,8 @@
 }
 
 #video-container {
-  /* display: flex; */
   justify-content: center;
   align-items: center;
-  /* position: relative; */
   gap: 25px;
   width: 90%;
   height: 90%;
@@ -42,34 +40,20 @@ video {
   display: flex;
 }
 #video-container.one video {
-  /* margin-top: auto; */
-  margin-left: auto;
-  margin-right: auto;
-  width: 90%;
+  width: 85%;
 }
 
 /* Two Cameras - 45% width each, side by side */
 #video-container.two {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  /* display: flex !important;
-  justify-content: center;
-  gap: 22px;
-  width: 100%;
-  height: 80%; */
 }
-/* #video-container.two video {
-  width: 45%;
-  height: auto;
-} */
 
 /* Three Cameras - Two on top, one below */
 #video-container.three {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 22px;
-  width: 100%;
 }
 #video-container.three video {
   width: 45%;
@@ -82,12 +66,23 @@ video {
 /* Four Cameras - 2x2 Grid */
 #video-container.four {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  gap: 22px;
-  width: 90%;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  justify-items: center;
+  align-items: center;
 }
 #video-container.four video {
-  width: 100%;
-  height: auto;
+  width: 90%;
+}
+#video-container.four [id=video-0], [id=video-2] {
+  margin-right: -10%;
+}
+#video-container.four [id=video-1], [id=video-3] {
+  margin-left: -10%;
+}
+#video-container.four [id=video-0], [id=video-1] {
+  margin-bottom: -5%;
+}
+#video-container.four [id=video-2], [id=video-3] {
+  margin-top: -5%;
 }

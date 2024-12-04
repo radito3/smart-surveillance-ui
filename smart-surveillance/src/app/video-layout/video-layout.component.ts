@@ -7,7 +7,7 @@ import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { Notification } from '../models/notification.model';
 import { CameraConfig } from '../models/camera-config.model';
-import { BehaviorSubject, delay, filter, from, map, Observable, retry, switchMap, throwError, timeout, timer } from 'rxjs';
+import { BehaviorSubject, delay, filter, from, map, Observable, retry, switchMap, take, throwError, timeout, timer } from 'rxjs';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import Hls from 'hls.js';
 import * as dashjs from 'dashjs';
@@ -30,9 +30,10 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
   @ViewChildren('videoElem') videoElements!: QueryList<ElementRef<HTMLVideoElement>>;
 
   cameraIDs$ = new BehaviorSubject<string[]>([]);
-  cameraPlayers: Array<Hls | dashjs.MediaPlayerClass> = [];
-
   videoFeeds = Array(4).fill(null).map(() => ({ active: false, loading: false, indicator: new LoadingService() }));
+
+  private cameraPlayers: Array<Hls | dashjs.MediaPlayerClass | null> = Array(4).fill(null);
+  private layoutStyles = ['one', 'two', 'three', 'four'];
 
   constructor(private notificationService: NotificationService,
               private httpClient: HttpClient,
@@ -68,10 +69,15 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
     // recreate video feeds in case the Web UI pod has been restarted
     this.httpClient.get<Endpoints>(environment.mediaMtxURL + '/endpoints')
       .pipe(timeout(5000), retry({ count: 3, delay: 2000 }))
-      .pipe(switchMap(endpoints => from(endpoints.items).pipe(
-        filter(endpoint => endpoint.name != 'origin'),
-        map(endpoint => this.mapEndpointToCameraConfig(endpoint))
-      )))
+      .pipe(
+        take(4),
+        switchMap(endpoints =>
+          from(endpoints.items).pipe(
+            // filter(endpoint => endpoint.name != 'origin'),
+            map(endpoint => this.mapEndpointToCameraConfig(endpoint))
+          )
+        )
+      )
       .subscribe({
         next: config => this.addCamera(config),
         error: err => console.error('Could not fetch endpoints: ', err)
@@ -89,38 +95,25 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
   addCamera(cameraConfig: CameraConfig) {
     this.cameraIDs$.next([...this.cameraIDs$.value, cameraConfig.ID]);
 
-    const container = this.document.getElementById('video-container') as HTMLDivElement;
-    // container.className = '';
-
-    // FIXME
-    switch (this.cameraIDs$.value.length) {
-      case 1:
-        container.classList.add('one');
-        break;
-      case 2:
-        container.classList.remove('one');
-        container.classList.add('two');
-        break;
-      case 3:
-        container.classList.remove('two');
-        container.classList.add('three');
-        break;
-      case 4:
-        container.classList.remove('three');
-        container.classList.add('four');
-        break;
-    }
+    this.updateVideoContianerStyleClass();
 
     const index = this.cameraIDs$.value.length - 1;
-    this.videoFeeds[index].active = true;
     const videoElem = this.videoElements.toArray()[index].nativeElement;
 
     const player = this.startStream(videoElem, index, cameraConfig.source, "camera-" + cameraConfig.ID);
     if (player !== null) {
-      this.cameraPlayers.push(player);
+      this.cameraPlayers[index] = player;
     } else {
       this.videoFeeds[index].active = false;
       this.cameraIDs$.next(this.cameraIDs$.value.filter((val, idx) => idx != index));
+    }
+  }
+
+  private updateVideoContianerStyleClass() {
+    const container = this.document.getElementById('video-container') as HTMLDivElement;
+    container.classList.remove(...this.layoutStyles);
+    if (this.cameraIDs$.value.length != 0) {
+      container.classList.add(this.layoutStyles[this.cameraIDs$.value.length - 1]);
     }
   }
 
@@ -194,6 +187,7 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
     // the HLS manifest file isn't created immediately - poll until it is present
     this.pollHlsManifestUntilPresent(streamURL).subscribe({
         next: () => {
+          this.videoFeeds[index].active = true;
           hls.loadSource(streamURL);
           hls.attachMedia(video);
         },
@@ -231,7 +225,7 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
       if (player instanceof Hls) {
         const streamPath = anonymization ? 'anon-camera-' : 'camera-' + this.cameraIDs$.value[i]
         this.changeStream(i, player, environment.mediaMtxURL + '/static/' + streamPath)
-      } else {
+      } else if (player != null) {
         // for future dev: handle DASH players...
         console.log("Anonymizing MPEG-DASH streams not yet implemented");
       }
@@ -262,18 +256,18 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
   stopAllStreams() {
     const numCameras = this.cameraIDs$.value.length;
     for (let i = 0; i < numCameras; i++) {
-      this.stopStream(0);
+      this.videoFeeds[i].active = false;
+      this.cameraPlayers[i]?.destroy();
     }
-    const container = this.document.getElementById('video-container') as HTMLDivElement;
-    container.className = '';
+    this.cameraIDs$.next([]);
+    this.updateVideoContianerStyleClass();
   }
 
   stopStream(index: number) {
-    // TODO: decrement video wrapper css style
     this.videoFeeds[index].active = false;
-    this.cameraPlayers[index].destroy();
-    this.cameraPlayers.splice(index, 1);
+    this.cameraPlayers[index]?.destroy();
     this.cameraIDs$.next(this.cameraIDs$.value.filter((val, idx) => idx != index));
+    this.updateVideoContianerStyleClass();
   }
 
 }
