@@ -73,7 +73,7 @@
     class="close-button"
     (click)="closeCameras()"
   >
-  Close video feeds
+  Close video feed{{ cameraIDs?.length! > 1 ? 's' : '' }}
   </button>
 </div>
 
