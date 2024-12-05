@@ -29,7 +29,6 @@ export class ControlsComponent implements OnInit, OnChanges {
 
   analysisOpText: string = "Start";
   anonymyzePrefix: string = "";
-  cameraConfigs: Map<string, CameraConfig> = new Map();
 
   private analysisMode: AnalysisMode = AnalysisMode.Behaviour;
   private notificationsChannelOpen: boolean = false;
@@ -70,8 +69,7 @@ export class ControlsComponent implements OnInit, OnChanges {
       return;
     }
 
-    const currentCameraIDs = Array.from(this.cameraConfigs.keys());
-    for (let ID of currentCameraIDs) {
+    for (let ID of changes['cameraIDs'].previousValue ?? []) {
       if (this.cameraIDs?.includes(ID)) {
         continue;
       }
@@ -93,8 +91,7 @@ export class ControlsComponent implements OnInit, OnChanges {
       }
 
       operation.subscribe({
-        error: err => console.error('Error cleaning up resources for Camera ' + ID, err),
-        complete: () => this.cameraConfigs.delete(ID)
+        error: err => console.error('Error cleaning up resources for Camera ' + ID, err)
       });
     }
   }
@@ -125,7 +122,6 @@ export class ControlsComponent implements OnInit, OnChanges {
 
     dialogRef.componentInstance.submitCamera.subscribe((cameraConfig: CameraConfig) => {
       this.cameraAdded.emit(cameraConfig);
-      this.cameraConfigs.set(cameraConfig.ID, cameraConfig);
       this.dialog.closeAll();
 
       if (this.isAnalysisOn) {
@@ -157,7 +153,7 @@ export class ControlsComponent implements OnInit, OnChanges {
   }
 
   toggleAnalysis() {
-    from(Array.from(this.cameraConfigs.keys()))
+    from(this.cameraIDs ?? [])
       .pipe(
         mergeMap(ID => this.makeAnalysisCall(ID, !this.isAnalysisOn))
       )
@@ -182,7 +178,7 @@ export class ControlsComponent implements OnInit, OnChanges {
   }
 
   toggleAnonymisation() {
-    from(Array.from(this.cameraConfigs.keys()))
+    from(this.cameraIDs ?? [])
       .pipe(
         mergeMap(ID => this.httpClient.post(environment.mediaMtxURL + '/anonymyze/camera-' + ID, null, { responseType: 'text' })
           .pipe(
