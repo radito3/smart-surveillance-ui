@@ -59,9 +59,6 @@ video {
   width: 45%;
   height: auto;
 }
-#video-container.three video:nth-child(3) {
-  width: 45%;
-}
 
 /* Four Cameras - 2x2 Grid */
 #video-container.four {
@@ -74,15 +71,15 @@ video {
 #video-container.four video {
   width: 90%;
 }
-#video-container.four [id=video-0], [id=video-2] {
+#video-container.four [id=video-0], #video-container.four [id=video-2] {
   margin-right: -10%;
 }
-#video-container.four [id=video-1], [id=video-3] {
+#video-container.four [id=video-1], #video-container.four [id=video-3] {
   margin-left: -10%;
 }
-#video-container.four [id=video-0], [id=video-1] {
+#video-container.four [id=video-0], #video-container.four [id=video-1] {
   margin-bottom: -5%;
 }
-#video-container.four [id=video-2], [id=video-3] {
+#video-container.four [id=video-2], #video-container.four [id=video-3] {
   margin-top: -5%;
 }
