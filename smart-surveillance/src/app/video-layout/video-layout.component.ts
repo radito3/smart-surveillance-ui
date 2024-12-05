@@ -7,7 +7,7 @@ import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { Notification } from '../models/notification.model';
 import { CameraConfig } from '../models/camera-config.model';
-import { BehaviorSubject, delay, filter, from, map, Observable, retry, switchMap, take, throwError, timeout, timer } from 'rxjs';
+import { BehaviorSubject, delay, filter, from, map, Observable, retry, switchMap, take, tap, throwError, timeout, timer } from 'rxjs';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import Hls from 'hls.js';
 import * as dashjs from 'dashjs';
@@ -73,7 +73,8 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
         take(4),
         switchMap(endpoints =>
           from(endpoints.items).pipe(
-            // filter(endpoint => endpoint.name != 'origin'),
+            // filter(endpoint => !endpoint.name.startsWith('origin')),
+            // tap(endpoint => console.log('reconnecting endpoint ', endpoint.name)),
             map(endpoint => this.mapEndpointToCameraConfig(endpoint))
           )
         )
@@ -223,8 +224,9 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
     for (let i = 0; i < this.cameraPlayers.length; i++) {
       const player = this.cameraPlayers[i];
       if (player instanceof Hls) {
-        const streamPath = anonymization ? 'anon-camera-' : 'camera-' + this.cameraIDs$.value[i]
-        this.changeStream(i, player, environment.mediaMtxURL + '/static/' + streamPath)
+        this.videoFeeds[i].active = false;
+        const streamPath = (anonymization ? 'anon-camera-' : 'camera-') + this.cameraIDs$.value[i] + '.m3u8';
+        this.changeStream(i, player, environment.mediaMtxURL + '/static/' + streamPath);
       } else if (player != null) {
         // for future dev: handle DASH players...
         console.log("Anonymizing MPEG-DASH streams not yet implemented");
@@ -239,6 +241,7 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
 
     this.pollHlsManifestUntilPresent(newUrl).subscribe({
       next: () => {
+        this.videoFeeds[index].active = true;
         player.loadSource(newUrl);
         player.startLoad();
       },
