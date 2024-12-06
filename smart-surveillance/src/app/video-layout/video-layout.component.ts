@@ -70,11 +70,12 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
     this.httpClient.get<Endpoints>(environment.mediaMtxURL + '/endpoints')
       .pipe(timeout(5000), retry({ count: 3, delay: 2000 }))
       .pipe(
-        take(4),
         switchMap(endpoints =>
+          // paging?
           from(endpoints.items).pipe(
+            take(4),
             // filter(endpoint => !endpoint.name.startsWith('origin')),
-            // tap(endpoint => console.log('reconnecting endpoint ', endpoint.name)),
+            tap(endpoint => console.log('Reconnecting camera stream: ', endpoint.name)),
             map(endpoint => this.mapEndpointToCameraConfig(endpoint))
           )
         )
