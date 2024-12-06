@@ -54,10 +54,14 @@ video {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+  align-items: flex-start;
 }
 #video-container.three video {
   width: 45%;
   height: auto;
+}
+#video-container.three [id=video-2] {
+  margin-top: -5%;
 }
 
 /* Four Cameras - 2x2 Grid */
@@ -66,7 +70,7 @@ video {
   grid-template-columns: repeat(2, 1fr);
   grid-template-rows: repeat(2, 1fr);
   justify-items: center;
-  align-items: center;
+  align-items: flex-start;
 }
 #video-container.four video {
   width: 90%;
