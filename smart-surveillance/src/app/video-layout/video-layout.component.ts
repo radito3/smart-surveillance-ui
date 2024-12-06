@@ -7,7 +7,7 @@ import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { Notification } from '../models/notification.model';
 import { CameraConfig } from '../models/camera-config.model';
-import { BehaviorSubject, delay, filter, from, map, Observable, retry, switchMap, take, tap, throwError, timeout, timer } from 'rxjs';
+import { BehaviorSubject, delay, from, map, Observable, retry, switchMap, take, tap, throwError, timeout, timer } from 'rxjs';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import Hls from 'hls.js';
 import * as dashjs from 'dashjs';
@@ -74,7 +74,6 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
           // paging?
           from(endpoints.items).pipe(
             take(4),
-            // filter(endpoint => !endpoint.name.startsWith('origin')),
             tap(endpoint => console.log('Reconnecting camera stream: ', endpoint.name)),
             map(endpoint => this.mapEndpointToCameraConfig(endpoint))
           )
@@ -90,6 +89,8 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
     // for future dev: if the endpoint is not RTSP/RTMP, we don't know the source URL as MediaMTX does not return it
     const mediaMtxHost = environment.mediaMtxURL.substring('http'.length);
     const source = endpoint.source.type.substring(0, 5) + mediaMtxHost + '/' + endpoint.name;
+    // this can corrupt the name if it is an anonymyzed stream
+    // but those are indended for recordings anyway, so that is permissable
     const ID = endpoint.name.replace('camera-', '');
     return new CameraConfig(ID, source);
   }
