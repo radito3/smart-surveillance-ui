@@ -209,11 +209,12 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
   private pollHlsManifestUntilPresent(url: string): Observable<any> {
     return this.httpClient.get(url, { observe: 'response', responseType: 'text' })
       .pipe(
+        // a large retry window is necessary because the HLS files are created relatively slow
         retry({
-          count: 10,
+          count: 15,
           delay: (err: HttpErrorResponse, retryCount: number) => {
             if (err.status == 404) {
-              return timer(3000);
+              return timer(5000);
             }
             console.error('Unexpected error while fetching manifest: ', err);
             return throwError(() => err);
