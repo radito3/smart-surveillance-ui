@@ -10,12 +10,12 @@ RUN npm install && \
 
 COPY . .
 
-RUN ng build --configuration=production --output-path=dist
+RUN ng build --configuration=production
 
 # consider an Alpine image
 FROM nginx:latest
 
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY --from=build /app/dist/smart-surveillance /usr/share/nginx/html
 
 EXPOSE 80
 
