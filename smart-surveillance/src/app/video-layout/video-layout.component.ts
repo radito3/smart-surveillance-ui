@@ -7,7 +7,7 @@ import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { Notification } from '../models/notification.model';
 import { CameraConfig } from '../models/camera-config.model';
-import { BehaviorSubject, delay, from, map, Observable, retry, switchMap, take, tap, throwError, timeout, timer } from 'rxjs';
+import { BehaviorSubject, delay, filter, from, map, mergeMap, Observable, of, retry, switchMap, take, tap, throwError, timeout, timer } from 'rxjs';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import Hls from 'hls.js';
 import * as dashjs from 'dashjs';
@@ -34,6 +34,7 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
 
   private cameraPlayers: Array<Hls | dashjs.MediaPlayerClass | null> = Array(4).fill(null);
   private layoutStyles = ['one', 'two', 'three', 'four'];
+  private isDisplayingNotification: boolean = false;
 
   constructor(private notificationService: NotificationService,
               private httpClient: HttpClient,
@@ -46,6 +47,11 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
   }
 
   private displayNotification(message: string, cameraID?: string) {
+    if (this.isDisplayingNotification) {
+      return;
+    }
+
+    this.isDisplayingNotification = true;
     let cameraIndex: number = -1;
     if (cameraID) {
       cameraIndex = this.cameraIDs$.value.indexOf(cameraID);
@@ -58,11 +64,17 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
       panelClass: cameraID ? ['notification-snackbar', 'notification-alert'] : 'notification-snackbar'
     });
 
-    if (cameraID) {
-      snackBarRef.afterDismissed()
-        .pipe(delay(5000))
-        .subscribe(() => this.videoElements.toArray()[cameraIndex].nativeElement.style.removeProperty('border'));
-    }
+    snackBarRef.afterDismissed()
+      .pipe(
+        tap(() => this.isDisplayingNotification = false),
+        mergeMap(() => of(null).pipe(
+          delay(5000),
+          // if the notification was dismissed but appears again within the 5s window, do not remove the border
+          filter(() => cameraID != undefined && !this.isDisplayingNotification),
+          tap(() => this.videoElements.toArray()[cameraIndex].nativeElement.style.removeProperty('border'))
+        ))
+      )
+      .subscribe();
   }
 
   ngAfterViewInit(): void {
