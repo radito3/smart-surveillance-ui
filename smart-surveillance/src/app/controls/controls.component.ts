@@ -168,7 +168,7 @@ export class ControlsComponent implements OnInit, OnChanges {
 
   private makeAnalysisCall(ID: string, shouldAnalyse: boolean): Observable<any> {
     if (shouldAnalyse) {
-      return this.httpClient.post(environment.mediaMtxURL + '/analysis/' + ID + '?analysisMode=' + this.analysisMode, null, { responseType: 'text' })
+      return this.httpClient.post(environment.mediaMtxURL + '/analysis/' + ID + '?analysisMode=' + this.analysisMode.toLowerCase(), null, { responseType: 'text' })
         .pipe(
           catchError(err => this.handleConflict(err, '/analysis/' + ID)),
           timeout(5000)

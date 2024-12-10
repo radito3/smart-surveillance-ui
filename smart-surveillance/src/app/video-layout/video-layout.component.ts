@@ -87,12 +87,24 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
 
   private mapEndpointToCameraConfig(endpoint: EndpointConfig) {
     // for future dev: if the endpoint is not RTSP/RTMP, we don't know the source URL as MediaMTX does not return it
-    const mediaMtxHost = environment.mediaMtxURL.substring('http'.length);
-    const source = endpoint.source.type.substring(0, 5) + mediaMtxHost + '/' + endpoint.name;
+    const mediaMtxHost = this.getVideoSourceHostname();
+    // the port doesn't matter as in the case of RTSP/RTMP endpoints, we rewrite the source address anyway
+    const source = endpoint.source.type.substring(0, 5) + '://' + mediaMtxHost + '/' + endpoint.name;
     // this can corrupt the name if it is an anonymyzed stream
     // but those are indended for recordings anyway, so that is permissable
     const ID = endpoint.name.replace('camera-', '');
     return new CameraConfig(ID, source);
+  }
+
+  private getVideoSourceHostname(): string {
+    // assume the cluster shares the same domain name across its services
+    let hostname = this.document.location.hostname; // the DNS name of the one that hosts the UI
+    let parts = hostname.split('.');
+    if (parts.length > 2) { // if there is a subdomain (e.g. web-ui.k8s.example.com)
+      parts[0] = 'mediamtx'; // switch the service name from web-ui to mediamtx
+      hostname = parts.join('.');
+    }
+    return hostname;
   }
 
   addCamera(cameraConfig: CameraConfig) {
@@ -108,7 +120,7 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
       this.cameraPlayers[index] = player;
     } else {
       this.videoFeeds[index].active = false;
-      this.cameraIDs$.next(this.cameraIDs$.value.filter((val, idx) => idx != index));
+      this.cameraIDs$.next(this.cameraIDs$.value.filter(val => val != cameraConfig.ID));
     }
   }
 
@@ -122,7 +134,8 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
 
   startStream(video: HTMLVideoElement, index: number, source: string, path: string): Hls | dashjs.MediaPlayerClass | null {
     if (source.startsWith("rtsp") || source.startsWith("rtmp")) {
-      source = environment.mediaMtxURL + '/static/' + path + ".m3u8";
+      const hostname = this.getVideoSourceHostname();
+      source = 'http://' + hostname + ':8080/static/' + path + ".m3u8";
     }
 
     if (!source.startsWith("http")) {
