@@ -183,7 +183,7 @@ export class ControlsComponent implements OnInit, OnChanges {
         mergeMap(ID => this.httpClient.post(environment.mediaMtxURL + '/anonymyze/camera-' + ID, null, { responseType: 'text' })
           .pipe(
             catchError(err => this.handleConflict(err, '/anonymyze/camera-' + ID)),
-            timeout(5000)
+            timeout(30000)
           )
         )
       )

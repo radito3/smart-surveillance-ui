@@ -54,7 +54,6 @@ video {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  align-items: flex-start;
 }
 #video-container.three video {
   width: 45%;

@@ -236,7 +236,7 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
       .pipe(
         // a large retry window is necessary because the HLS files are created relatively slow
         retry({
-          count: 15,
+          count: 30,
           delay: (err: HttpErrorResponse, retryCount: number) => {
             if (err.status == 404) {
               return timer(5000);
