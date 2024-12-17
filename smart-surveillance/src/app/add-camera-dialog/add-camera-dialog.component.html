@@ -15,11 +15,7 @@
         <mat-error *ngIf="form.get('cameraSource')?.hasError('pattern')">Invalid URL format.</mat-error>
     </mat-form-field>
 
-    <div class="toggles">
-        <mat-slide-toggle formControlName="transcoding">Enable Transcoding</mat-slide-toggle>
-
-        <mat-slide-toggle formControlName="recording">Enable recording</mat-slide-toggle>
-    </div>
+    <mat-slide-toggle formControlName="recording">Enable recording</mat-slide-toggle>
 
     <mat-form-field appearance="fill" class="full-width">
         <mat-label>Camera max readers</mat-label>

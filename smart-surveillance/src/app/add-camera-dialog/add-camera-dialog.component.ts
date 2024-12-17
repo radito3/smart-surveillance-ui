@@ -32,7 +32,6 @@ export class AddCameraDialogComponent {
     this.form = this.fb.group({
       cameraID: ['', [Validators.required, this.cameraIDUniquenessValidator(data.cameraIDs), Validators.minLength(1), Validators.maxLength(64)]],
       cameraSource: ['', [Validators.required, Validators.pattern('(rtsp|rtmp|http)://.+')]],
-      transcoding: [false],
       recording: [false],
       maxReaders: [3, [Validators.min(2), Validators.max(10), Validators.pattern('^[0-9]+$')]],
     });
@@ -53,7 +52,6 @@ export class AddCameraDialogComponent {
     const payload = new CameraConfig(
       this.form.value.cameraID,
       this.form.value.cameraSource,
-      this.form.value.transcoding,
       this.form.value.recording,
       this.form.value.maxReaders
     );

@@ -7,14 +7,6 @@
     justify-content: center; /* Center content vertically */
 }
 
-.toggles {
-    display: flex;
-    justify-content: flex-start;
-    flex-direction: column;
-    gap: 1.5rem;
-    margin-bottom: 1.5rem;
-}
-
 .full-width {
     width: 100%;
     margin-bottom: 1rem;
