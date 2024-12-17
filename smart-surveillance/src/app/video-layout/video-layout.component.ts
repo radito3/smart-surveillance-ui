@@ -7,8 +7,8 @@ import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { Notification } from '../models/notification.model';
 import { CameraConfig } from '../models/camera-config.model';
-import { BehaviorSubject, delay, filter, from, map, mergeMap, Observable, of, retry, switchMap, take, tap, throwError, timeout, timer } from 'rxjs';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { BehaviorSubject, delay, filter, from, map, mergeMap, of, retry, switchMap, take, tap, timeout } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
 import Hls from 'hls.js';
 import * as dashjs from 'dashjs';
 import { environment } from '../../environments/environment';
@@ -145,12 +145,13 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
   }
 
   startStream(video: HTMLVideoElement, index: number, source: string, path: string): Hls | dashjs.MediaPlayerClass | null {
+    let rerouted: boolean = false;
     if (source.startsWith("rtsp") || source.startsWith("rtmp")) {
-      const hostname = this.getVideoSourceHostname();
-      source = 'http://' + hostname + ':8080/static/' + path + ".m3u8";
+      source = environment.hlsRootURL + '/' + path + '/index.m3u8';
+      rerouted = true;
     }
 
-    if (!source.startsWith("http")) {
+    if (!rerouted && !source.startsWith("http")) {
       console.error("Unsupported stream format for " + source);
       this.displayNotification("Unsupported stream format");
       return null;
@@ -207,45 +208,26 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
       }
     });
 
-    hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+    // when the video is resumed after a manual or forced pause
+		// (i.e. when the window is minimized), restore live streaming.
+		video.onplay = () => {
+      if (hls.liveSyncPosition)
+			  video.currentTime = hls.liveSyncPosition;
+		};
+
+    hls.on(Hls.Events.MANIFEST_LOADED, () => {
+      this.videoFeeds[index].loading = false;
+      this.videoFeeds[index].indicator.hide();
+      this.videoFeeds[index].active = true;
+      video.play();
+    });
+
+    hls.attachMedia(video);
+    hls.loadSource(streamURL);
 
     this.videoFeeds[index].loading = true;
     this.videoFeeds[index].indicator.show();
-
-    // the HLS manifest file isn't created immediately - poll until it is present
-    this.pollHlsManifestUntilPresent(streamURL).subscribe({
-        next: () => {
-          this.videoFeeds[index].active = true;
-          hls.loadSource(streamURL);
-          hls.attachMedia(video);
-        },
-        error: () => {
-          console.error('Manifest not available after retries.');
-          this.stopStream(index);
-        },
-        complete: () => {
-          this.videoFeeds[index].loading = false;
-          this.videoFeeds[index].indicator.hide();
-        }
-      });
     return hls;
-  }
-
-  private pollHlsManifestUntilPresent(url: string): Observable<any> {
-    return this.httpClient.get(url, { observe: 'response', responseType: 'text' })
-      .pipe(
-        // a large retry window is necessary because the HLS files are created relatively slow
-        retry({
-          count: 30,
-          delay: (err: HttpErrorResponse, retryCount: number) => {
-            if (err.status == 404) {
-              return timer(5000);
-            }
-            console.error('Unexpected error while fetching manifest: ', err);
-            return throwError(() => err);
-          }
-        })
-      );
   }
 
   toggleAnonymyzedStreams(anonymization: boolean) {
@@ -254,7 +236,7 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
       if (player instanceof Hls) {
         this.videoFeeds[i].active = false;
         const streamPath = (anonymization ? 'anon-camera-' : 'camera-') + this.cameraIDs$.value[i] + '.m3u8';
-        this.changeStream(i, player, environment.mediaMtxURL + '/static/' + streamPath);
+        this.changeStream(i, player, environment.hlsRootURL + '/' + streamPath + '/index.m3u8');
       } else if (player != null) {
         // for future dev: handle DASH players...
         console.log("Anonymizing MPEG-DASH streams not yet implemented");
@@ -267,21 +249,8 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
     this.videoFeeds[index].loading = true;
     this.videoFeeds[index].indicator.show();
 
-    this.pollHlsManifestUntilPresent(newUrl).subscribe({
-      next: () => {
-        this.videoFeeds[index].active = true;
-        player.loadSource(newUrl);
-        player.startLoad();
-      },
-      error: () => {
-        console.error('Manifest not available after retries.');
-        this.stopStream(index);
-      },
-      complete: () => {
-        this.videoFeeds[index].loading = false;
-        this.videoFeeds[index].indicator.hide();
-      }
-    });
+    player.loadSource(newUrl);
+    player.startLoad();
   }
 
   stopAllStreams() {
