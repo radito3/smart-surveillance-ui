@@ -11,6 +11,7 @@ import { catchError, concatMap, from, mergeMap, Observable, of, retry, throwErro
 import { CameraConfig } from '../models/camera-config.model';
 import { environment } from '../../environments/environment';
 import { NgIf } from '@angular/common';
+import { RecordingsComponent } from '../recordings/recordings.component';
 
 @Component({
   selector: 'app-controls',
@@ -28,11 +29,13 @@ export class ControlsComponent implements OnInit, OnChanges {
   @Output() camerasClosed: EventEmitter<boolean> = new EventEmitter();
 
   analysisOpText: string = "Start";
+  recordingPrefix: string = "Start";
   anonymyzePrefix: string = "";
 
   private analysisMode: AnalysisMode = AnalysisMode.Behaviour;
   private notificationsChannelOpen: boolean = false;
   private isAnalysisOn: boolean = false;
+  private recordingState: boolean = false;
   private anonymizationState: boolean = false;
 
   constructor(private dialog: MatDialog,
@@ -175,6 +178,31 @@ export class ControlsComponent implements OnInit, OnChanges {
         )
     }
     return this.makeDeleteRequest('/analysis/' + ID)
+  }
+
+  openRecordingsDialog() {
+    this.dialog.open(RecordingsComponent, {
+      height: '37rem', width: '37rem'
+    });
+  }
+
+  toggleRecordingAll() {
+    const payload = { record: !this.recordingState };
+    from(this.cameraIDs ?? [])
+      .pipe(
+        mergeMap(ID => this.httpClient.patch(environment.mediaMtxURL + '/endpoints/camera-' + ID, payload, { responseType: 'text' })
+          .pipe(
+            timeout(5000)
+          )
+        )
+      )
+      .subscribe({
+        error: err => console.error('Could not start recording: ', err),
+        complete: () => {
+          this.recordingState = !this.recordingState;
+          this.recordingPrefix = this.recordingState ? "Stop" : "Start";
+        }
+      })
   }
 
   toggleAnonymisation() {

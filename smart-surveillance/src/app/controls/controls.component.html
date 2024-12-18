@@ -18,7 +18,7 @@
       mat-mini-fab
       color="accent"
       class="play-recording-button"
-      [disabled]="true"
+      (click)="openRecordingsDialog()"
     >
       <!-- maybe have a popup tooltip: "Recoding is currently unsupported" -->
       <mat-icon>play_arrow</mat-icon>
@@ -29,15 +29,14 @@
   </div>
 
   <div class="recording-button-container">
-    <!-- this will lead to a dropdown/dialog menu of current cameras -->
     <button
       mat-mini-fab
       color="accent"
       class="recording-button"
-      [disabled]="true"
+      (click)="toggleRecordingAll()"
     >
       <mat-icon>fiber_smart_record</mat-icon>
-      <span class="recording-tooltip tooltip tooltip-left">Start recording</span>
+      <span class="recording-tooltip tooltip tooltip-left">{{ recordingPrefix }} recording</span>
     </button>
   </div>
 
