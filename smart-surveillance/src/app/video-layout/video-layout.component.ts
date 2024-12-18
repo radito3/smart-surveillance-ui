@@ -198,6 +198,8 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
             break;
           case Hls.ErrorTypes.NETWORK_ERROR:
             console.error('fatal network error encountered: ', data);
+            hls.destroy();
+            this.stopStream(index);
             break;
           default:
             console.log('cannot recover hls error. stopping stream ' + index)
@@ -209,11 +211,11 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
     });
 
     // when the video is resumed after a manual or forced pause
-		// (i.e. when the window is minimized), restore live streaming.
-		video.onplay = () => {
+    // (i.e. when the window is minimized), restore live streaming.
+    video.onplay = () => {
       if (hls.liveSyncPosition)
-			  video.currentTime = hls.liveSyncPosition;
-		};
+        video.currentTime = hls.liveSyncPosition;
+    };
 
     hls.on(Hls.Events.MANIFEST_LOADED, () => {
       this.videoFeeds[index].loading = false;
