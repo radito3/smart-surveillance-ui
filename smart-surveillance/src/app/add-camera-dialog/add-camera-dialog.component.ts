@@ -50,8 +50,8 @@ export class AddCameraDialogComponent {
   onSubmit() {
     this.submitClicked = true;
     const payload = new CameraConfig(
-      this.form.value.cameraID,
-      this.form.value.cameraSource,
+      this.form.value.cameraID.trim(),
+      this.form.value.cameraSource.trim(),
       this.form.value.recording,
       this.form.value.maxReaders
     );

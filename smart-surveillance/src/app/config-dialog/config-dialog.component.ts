@@ -103,6 +103,7 @@ export class ConfigDialogComponent {
 
   onSubmit() {
     this.submitClicked = true;
+    // trim values
     const payload = {...this.form.value} as Config;
     if (payload.webhookCredentials) {
       payload.webhookCredentials = this.encryptCredentials(payload.webhookCredentials);
