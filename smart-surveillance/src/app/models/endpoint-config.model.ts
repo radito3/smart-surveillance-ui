@@ -7,6 +7,6 @@ export class SourceConfig {
 export class EndpointConfig {
     constructor(
         public name: string,
-        public source: SourceConfig
+        public source?: SourceConfig
     ) {}
 }

@@ -7,7 +7,7 @@ import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { Notification } from '../models/notification.model';
 import { CameraConfig } from '../models/camera-config.model';
-import { BehaviorSubject, delay, filter, from, map, mergeMap, of, retry, switchMap, take, tap, timeout } from 'rxjs';
+import { BehaviorSubject, delay, EMPTY, filter, from, mergeMap, of, retry, switchMap, take, tap, timeout } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import Hls from 'hls.js';
 import * as dashjs from 'dashjs';
@@ -87,7 +87,7 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
           from(endpoints.items).pipe(
             take(4),
             tap(endpoint => console.log('Reconnecting camera stream: ', endpoint.name)),
-            map(endpoint => this.mapEndpointToCameraConfig(endpoint))
+            mergeMap(endpoint => this.mapEndpointToCameraConfig(endpoint))
           )
         )
       )
@@ -98,14 +98,17 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
   }
 
   private mapEndpointToCameraConfig(endpoint: EndpointConfig) {
+    if (!endpoint.source) {
+      return EMPTY;
+    }
     // for future dev: if the endpoint is not RTSP/RTMP, we don't know the source URL as MediaMTX does not return it
     const mediaMtxHost = this.getVideoSourceHostname();
     // the port doesn't matter as in the case of RTSP/RTMP endpoints, we rewrite the source address anyway
-    const source = endpoint.source.type.substring(0, 5) + '://' + mediaMtxHost + '/' + endpoint.name;
+    const source = endpoint.source!.type.substring(0, 5) + '://' + mediaMtxHost + '/' + endpoint.name;
     // this can corrupt the name if it is an anonymyzed stream
     // but those are indended for recordings anyway, so that is permissable
     const ID = endpoint.name.replace('camera-', '');
-    return new CameraConfig(ID, source);
+    return of(new CameraConfig(ID, source));
   }
 
   private getVideoSourceHostname(): string {
