@@ -270,6 +270,8 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
 
   stopStream(index: number) {
     this.videoFeeds[index].active = false;
+    this.videoFeeds[index].loading = false;
+    this.videoFeeds[index].indicator.hide();
     this.cameraPlayers[index]?.destroy();
     this.cameraIDs$.next(this.cameraIDs$.value.filter((val, idx) => idx != index));
     this.updateVideoContianerStyleClass();
