@@ -237,7 +237,7 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
       const player = this.cameraPlayers[i];
       if (player instanceof Hls) {
         this.videoFeeds[i].active = false;
-        const streamPath = (anonymization ? 'anon-camera-' : 'camera-') + this.cameraIDs$.value[i] + '.m3u8';
+        const streamPath = (anonymization ? 'anon-camera-' : 'camera-') + this.cameraIDs$.value[i];
         this.changeStream(i, player, environment.hlsRootURL + '/' + streamPath + '/index.m3u8');
       } else if (player != null) {
         // for future dev: handle DASH players...
