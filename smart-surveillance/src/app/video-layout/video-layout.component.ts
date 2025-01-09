@@ -7,7 +7,7 @@ import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { Notification } from '../models/notification.model';
 import { CameraConfig } from '../models/camera-config.model';
-import { BehaviorSubject, delay, EMPTY, filter, from, mergeMap, of, retry, switchMap, take, tap, timeout } from 'rxjs';
+import { BehaviorSubject, delay, EMPTY, filter, from, mergeMap, of, retry, switchMap, take, tap, timeout, timer } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import Hls from 'hls.js';
 import * as dashjs from 'dashjs';
@@ -254,8 +254,11 @@ export class VideoLayoutComponent implements OnInit, AfterViewInit {
     this.videoFeeds[index].loading = true;
     this.videoFeeds[index].indicator.show();
 
-    player.loadSource(newUrl);
-    player.startLoad();
+    // give the job some time to start publishing
+    timer(5000).subscribe(() => {
+      player.loadSource(newUrl);
+      player.startLoad();
+    });
   }
 
   stopAllStreams() {
